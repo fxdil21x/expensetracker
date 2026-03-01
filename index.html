@@ -3,155 +3,127 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pro Expense Tracker | Dark Edition</title>
+    <title>Cloud Finance Pro | Admin & Auth</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root {
-            --primary: #3b82f6;
-            --accent: #10b981;
-            --bg-dark: #0f172a;
-            --glass: rgba(30, 41, 59, 0.7);
-            --text: #f8fafc;
-        }
-
+        :root { --primary: #3b82f6; --accent: #10b981; --bg: #0f172a; --glass: rgba(30, 41, 59, 0.7); --text: #f8fafc; }
+        
         body {
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
-            background: linear-gradient(rgba(15, 23, 42, 0.8), rgba(15, 23, 42, 0.8)), 
-                        url('https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&q=80&w=2000');
-            background-size: cover;
-            background-attachment: fixed;
-            background-position: center;
-            color: var(--text);
-            margin: 0;
-            padding: 20px;
-            min-height: 100vh;
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.9)), 
+                        url('https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80');
+            background-size: cover; background-attachment: fixed; color: var(--text); margin: 0; padding: 20px;
         }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
+        /* Auth Overlay Styles */
+        .auth-overlay { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 2000; }
+        .auth-card { background: var(--glass); padding: 35px; border-radius: 24px; border: 1px solid rgba(255,255,255,0.1); width: 90%; max-width: 380px; text-align: center; backdrop-filter: blur(15px); }
+        
+        .container { max-width: 1200px; margin: 0 auto; display: none; }
+        .card { background: var(--glass); backdrop-filter: blur(12px); border-radius: 16px; padding: 20px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        
+        /* Admin Styling */
+        #admin-panel { border: 2px solid var(--accent); display: none; background: rgba(16, 185, 129, 0.1); }
+        .user-row { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: rgba(0,0,0,0.2); margin-bottom: 8px; border-radius: 8px; }
 
-        /* Glassmorphism Cards */
-        .card {
-            background: var(--glass);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            padding: 24px;
-            margin-bottom: 20px;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-        }
+        /* UI Elements */
+        input, select, button { width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.3); color: white; font-size: 14px; box-sizing: border-box; }
+        .btn-main { background: var(--primary); border: none; font-weight: 700; cursor: pointer; transition: 0.2s; }
+        .btn-main:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-approve { background: var(--accent); width: auto; padding: 6px 15px; margin: 0; border: none; font-weight: bold; }
+        
+        .link-text { cursor: pointer; font-size: 0.85rem; color: var(--primary); margin: 5px; display: inline-block; }
+        .link-text:hover { text-decoration: underline; }
 
-        h2 { font-size: 1.2rem; color: var(--primary); margin-top: 0; display: flex; align-items: center; gap: 10px; }
+        .grid { display: grid; grid-template-columns: 1fr 2.5fr; gap: 20px; }
+        @media (max-width: 850px) { .grid { grid-template-columns: 1fr; } }
 
-        /* Responsive Grid */
-        .grid {
-            display: grid;
-            grid-template-columns: 1fr 2fr;
-            gap: 20px;
-        }
-
-        @media (max-width: 900px) {
-            .grid { grid-template-columns: 1fr; }
-            .input-group { grid-template-columns: 1fr !important; }
-        }
-
-        /* Inputs & Buttons */
-        input, select, button {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            padding: 12px;
-            border-radius: 8px;
-            color: white;
-            font-size: 1rem;
-            margin-bottom: 10px;
-            width: 100%;
-        }
-
-        input:focus { outline: 2px solid var(--primary); background: rgba(255, 255, 255, 0.1); }
-
-        .btn-main { background: var(--primary); border: none; font-weight: 600; cursor: pointer; transition: 0.3s; }
-        .btn-main:hover { background: #2563eb; transform: translateY(-2px); }
-
-        .btn-del { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; }
-        .btn-del:hover { background: rgba(239, 68, 68, 0.4); }
-
-        /* Table Styling */
-        .table-container { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th { text-align: left; padding: 12px; color: #94a3b8; font-size: 0.8rem; text-transform: uppercase; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
-        td { padding: 14px 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
-
-        .total-display {
-            font-size: 2.5rem;
-            font-weight: 800;
-            text-align: center;
-            background: linear-gradient(to right, #60a5fa, #34d399);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin: 10px 0;
-        }
-
-        canvas { max-height: 300px !important; margin: 0 auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; color: #94a3b8; font-size: 0.75rem; padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); text-transform: uppercase; }
+        td { padding: 12px 10px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="card" style="text-align: center;">
-        <span style="color: #94a3b8; text-transform: uppercase; letter-spacing: 1px;">Total Monthly Spend</span>
-        <div id="m-total" class="total-display">$0.00</div>
-    </div>
-
-    <div class="grid">
-        <div class="sidebar">
-            <div class="card">
-                <h2>Category Management</h2>
-                <input type="text" id="new-category" placeholder="New Head (e.g., Rent)">
-                <button class="btn-main" id="add-cat-btn" style="background: var(--accent);">Add Head</button>
-                <div id="category-list" style="margin-top: 15px;"></div>
+    <div id="auth-screen" class="auth-overlay">
+        <div class="auth-card">
+            <h2 id="auth-title" style="margin-bottom: 25px;">Sign In</h2>
+            <input type="email" id="auth-email" placeholder="Email Address">
+            <input type="password" id="auth-pass" placeholder="Password">
+            <button class="btn-main" id="auth-btn">Sign In</button>
+            
+            <div style="margin-top: 10px;">
+                <span id="toggle-auth" class="link-text">Create Account</span>
+                <span id="forgot-btn" class="link-text">Forgot Password?</span>
             </div>
-
-            <div class="card">
-                <h2>Monthly Pie Chart</h2>
-                <canvas id="monthlyChart"></canvas>
-            </div>
-        </div>
-
-        <div class="main">
-            <div class="card">
-                <h2>Log New Expense</h2>
-                <div class="input-group" style="display: grid; grid-template-columns: 1.5fr 1.5fr 1fr auto; gap: 10px;">
-                    <input type="date" id="exp-date">
-                    <select id="exp-category"><option value="">Select Head...</option></select>
-                    <input type="number" id="exp-amount" placeholder="Amount">
-                    <button class="btn-main" id="save-entry-btn">Save</button>
-                </div>
-            </div>
-
-            <div class="card">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                    <h2>History</h2>
-                    <input type="text" id="search-input" placeholder="Search items..." onkeyup="filterTable()" style="width: 200px; margin-bottom: 0;">
-                </div>
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr><th>Date</th><th>Head</th><th>Amount</th><th>Action</th></tr>
-                        </thead>
-                        <tbody id="log-body"></tbody>
-                    </table>
-                </div>
-            </div>
+            <div id="auth-status" style="margin-top: 20px; color: #fbbf24; font-size: 0.9rem; font-weight: 500;"></div>
         </div>
     </div>
-</div>
+
+    <div id="main-container" class="container">
+        
+        <div id="admin-panel" class="card">
+            <h2 style="color: var(--accent); margin-bottom: 15px;">Admin: Approval Requests</h2>
+            <div id="pending-users-list">No pending requests found.</div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+            <h1 style="margin:0; font-size: 1.5rem;">Expense Dashboard</h1>
+            <button onclick="window.logout()" style="width:auto; padding: 8px 15px; background:transparent; border:1px solid #ef4444; color:#ef4444; margin:0;">Logout</button>
+        </div>
+
+        <div class="grid">
+            <div class="sidebar">
+                <div class="card" style="text-align: center;">
+                    <span style="color: #94a3b8; font-size: 0.9rem;">Monthly Total</span>
+                    <div id="m-total" style="font-size: 2.2rem; font-weight: 800; color: var(--primary); margin: 10px 0;">$0.00</div>
+                </div>
+
+                <div class="card">
+                    <h2>Manage Heads</h2>
+                    <input type="text" id="new-category" placeholder="Add New (e.g. Travel)">
+                    <button class="btn-main" onclick="window.addCategory()" style="background:var(--accent)">Add Head</button>
+                    <div id="category-list" style="max-height: 200px; overflow-y: auto;"></div>
+                </div>
+
+                <div class="card">
+                    <h2>Spending Share</h2>
+                    <canvas id="monthlyChart"></canvas>
+                </div>
+            </div>
+
+            <div class="main">
+                <div class="card">
+                    <h2>Log New Entry</h2>
+                    <div style="display: grid; grid-template-columns: 1.2fr 1.2fr 1fr auto; gap: 10px;">
+                        <input type="date" id="exp-date">
+                        <select id="exp-category"><option>Loading Heads...</option></select>
+                        <input type="number" id="exp-amount" placeholder="Amt">
+                        <button class="btn-main" onclick="window.saveEntry()" style="margin:0">Save</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+                        <h2>Recent History</h2>
+                        <input type="text" id="search-input" placeholder="Search..." onkeyup="filterTable()" style="width: 180px; margin:0;">
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table>
+                            <thead><tr><th>Date</th><th>Head</th><th>Amount</th><th>Action</th></tr></thead>
+                            <tbody id="log-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, addDoc, onSnapshot, query, where, orderBy, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyAIATSlAXKTIqJPZqwkkZeX3AJjfR2irfs",
@@ -163,78 +135,137 @@
     };
 
     const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
     const db = getFirestore(app);
+    const ADMIN_EMAIL = "fadilrafeek29@gmail.com";
+    
+    let isLoginMode = true;
     let myChart;
 
-    // --- Chart Logic ---
-    function updateChart(labels, values) {
-        const ctx = document.getElementById('monthlyChart').getContext('2d');
-        if(myChart) myChart.destroy();
-        myChart = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels,
-                datasets: [{
-                    data: values,
-                    backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'],
-                    borderWidth: 0
-                }]
-            },
-            options: { plugins: { legend: { labels: { color: 'white' } } } }
+    // --- Authentication UI Logic ---
+    const toggleBtn = document.getElementById('toggle-auth');
+    const authBtn = document.getElementById('auth-btn');
+    const authTitle = document.getElementById('auth-title');
+    const authStatus = document.getElementById('auth-status');
+
+    toggleBtn.onclick = () => {
+        isLoginMode = !isLoginMode;
+        authTitle.innerText = isLoginMode ? "Sign In" : "Request Access";
+        authBtn.innerText = isLoginMode ? "Sign In" : "Sign Up";
+        toggleBtn.innerText = isLoginMode ? "Create Account" : "Back to Login";
+    };
+
+    document.getElementById('forgot-btn').onclick = async () => {
+        const email = document.getElementById('auth-email').value;
+        if(!email) return alert("Please enter your email address first.");
+        try {
+            await sendPasswordResetEmail(auth, email);
+            alert("Password reset email sent!");
+        } catch (e) { alert(e.message); }
+    };
+
+    authBtn.onclick = async () => {
+        const email = document.getElementById('auth-email').value;
+        const pass = document.getElementById('auth-pass').value;
+        try {
+            if(isLoginMode) {
+                await signInWithEmailAndPassword(auth, email, pass);
+            } else {
+                const res = await createUserWithEmailAndPassword(auth, email, pass);
+                await setDoc(doc(db, "users", res.user.uid), { email, approved: false, uid: res.user.uid });
+                authStatus.innerText = "Request Sent! Fadil will review your account.";
+            }
+        } catch (e) { alert(e.message); }
+    };
+
+    window.logout = () => signOut(auth);
+
+    // --- Core State Logic ---
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            const userDoc = await getDoc(doc(db, "users", user.uid));
+            const data = userDoc.data();
+            
+            if (data && data.approved) {
+                document.getElementById('auth-screen').classList.add('hidden');
+                document.getElementById('main-container').style.display = 'block';
+                if(user.email === ADMIN_EMAIL) loadAdminPanel();
+                initUserData(user.uid);
+            } else {
+                authStatus.innerText = "Status: Pending Admin Approval.";
+                if(user.email === ADMIN_EMAIL) {
+                    await updateDoc(doc(db, "users", user.uid), { approved: true });
+                    location.reload();
+                }
+            }
+        } else {
+            document.getElementById('auth-screen').classList.remove('hidden');
+            document.getElementById('main-container').style.display = 'none';
+        }
+    });
+
+    // --- Admin Functions ---
+    function loadAdminPanel() {
+        document.getElementById('admin-panel').style.display = 'block';
+        onSnapshot(query(collection(db, "users"), where("approved", "==", false)), (snap) => {
+            const list = document.getElementById('pending-users-list');
+            list.innerHTML = '';
+            if(snap.empty) list.innerHTML = "No pending requests.";
+            snap.forEach(u => {
+                list.innerHTML += `<div class="user-row"><span>${u.data().email}</span> <button class="btn-approve" onclick="window.approveUser('${u.id}')">Approve</button></div>`;
+            });
+        });
+    }
+    window.approveUser = (uid) => updateDoc(doc(db, "users", uid), { approved: true });
+
+    // --- User Dashboard Data ---
+    function initUserData(uid) {
+        // Categories Sync
+        onSnapshot(query(collection(db, "categories"), where("uid", "==", uid)), (snap) => {
+            const list = document.getElementById('category-list');
+            const select = document.getElementById('exp-category');
+            list.innerHTML = ''; select.innerHTML = '<option value="">Select Head...</option>';
+            snap.forEach(d => {
+                list.innerHTML += `<div class="user-row" style="font-size:0.85rem"><span>${d.data().name}</span> <button onclick="window.delDoc('categories','${d.id}')" style="width:auto; color:red; border:none; background:none; cursor:pointer">×</button></div>`;
+                select.innerHTML += `<option value="${d.data().name}">${d.data().name}</option>`;
+            });
+        });
+
+        // Expenses Sync
+        onSnapshot(query(collection(db, "expenses"), where("uid", "==", uid), orderBy("date", "desc")), (snap) => {
+            const body = document.getElementById('log-body');
+            body.innerHTML = ''; let total = 0; let heads = {};
+            snap.forEach(d => {
+                const item = d.data();
+                total += item.amt;
+                heads[item.cat] = (heads[item.cat] || 0) + item.amt;
+                body.innerHTML += `<tr><td>${item.date}</td><td><span style="color:var(--primary)">${item.cat}</span></td><td>$${item.amt.toLocaleString()}</td><td><button onclick="window.delDoc('expenses','${d.id}')" style="color:#fca5a5; border:none; background:none; cursor:pointer">Delete</button></td></tr>`;
+            });
+            document.getElementById('m-total').innerText = `$${total.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+            updateChart(Object.keys(heads), Object.values(heads));
         });
     }
 
-    // --- Realtime Categories ---
-    onSnapshot(collection(db, "categories"), (snap) => {
-        const list = document.getElementById('category-list');
-        const select = document.getElementById('exp-category');
-        list.innerHTML = ''; select.innerHTML = '<option value="">Select Head...</option>';
-        snap.forEach(d => {
-            const name = d.data().name;
-            list.innerHTML += `<div style="display:flex; justify-content:space-between; margin-bottom:8px; background:rgba(255,255,255,0.05); padding:8px; border-radius:6px;">
-                ${name} <button class="btn-del" style="padding:2px 8px" onclick="deleteData('categories','${d.id}')">×</button>
-            </div>`;
-            select.innerHTML += `<option value="${name}">${name}</option>`;
-        });
-    });
-
-    document.getElementById('add-cat-btn').onclick = () => {
-        const name = document.getElementById('new-category').value;
-        if(name) addDoc(collection(db, "categories"), { name });
-        document.getElementById('new-category').value = '';
+    window.addCategory = () => {
+        const input = document.getElementById('new-category');
+        if(input.value) addDoc(collection(db, "categories"), { name: input.value, uid: auth.currentUser.uid });
+        input.value = '';
     };
 
-    // --- Realtime Expenses ---
-    const q = query(collection(db, "expenses"), orderBy("date", "desc"));
-    onSnapshot(q, (snap) => {
-        const logBody = document.getElementById('log-body');
-        logBody.innerHTML = '';
-        let total = 0; let headTotals = {};
-
-        snap.forEach(d => {
-            const data = d.data();
-            total += data.amt;
-            headTotals[data.cat] = (headTotals[data.cat] || 0) + data.amt;
-            logBody.innerHTML += `<tr>
-                <td>${data.date}</td>
-                <td><span style="color:var(--primary)">${data.cat}</span></td>
-                <td>$${data.amt.toLocaleString()}</td>
-                <td><button class="btn-del" onclick="deleteData('expenses','${d.id}')">Delete</button></td>
-            </tr>`;
-        });
-
-        document.getElementById('m-total').innerText = `$${total.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
-        updateChart(Object.keys(headTotals), Object.values(headTotals));
-    });
-
-    document.getElementById('save-entry-btn').onclick = () => {
+    window.saveEntry = () => {
         const date = document.getElementById('exp-date').value;
         const cat = document.getElementById('exp-category').value;
         const amt = parseFloat(document.getElementById('exp-amount').value);
-        if(date && cat && amt) addDoc(collection(db, "expenses"), { date, cat, amt });
+        if(date && cat && amt) addDoc(collection(db, "expenses"), { date, cat, amt, uid: auth.currentUser.uid });
     };
 
-    window.deleteData = async (coll, id) => { if(confirm("Delete item?")) await deleteDoc(doc(db, coll, id)); };
+    window.delDoc = (c, id) => confirm("Delete permanently?") && deleteDoc(doc(db, c, id));
+
+    function updateChart(l, v) {
+        const ctx = document.getElementById('monthlyChart').getContext('2d');
+        if(myChart) myChart.destroy();
+        myChart = new Chart(ctx, { type: 'doughnut', data: { labels: l, datasets: [{ data: v, backgroundColor: ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899'], borderWidth: 0 }] }, options: { plugins: { legend: { labels: { color: 'white', font: { size: 10 } } } } } });
+    }
 
     window.filterTable = () => {
         const val = document.getElementById('search-input').value.toUpperCase();
