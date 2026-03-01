@@ -3,33 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enterprise Expense Tracker</title>
+    <title>Enterprise Expense Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --primary: #2563eb; --accent: #10b981; --bg: #f8fafc; --text: #0f172a; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); padding: 20px; margin: 0; }
-        .container { max-width: 1100px; margin: 0 auto; }
+        .container { max-width: 1200px; margin: 0 auto; }
         
         .grid { display: grid; grid-template-columns: 300px 1fr; gap: 20px; }
         .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; margin-bottom: 20px; }
         
-        h2 { font-size: 1.1rem; margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 10px; color: var(--primary); }
-        
+        .chart-container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+        canvas { max-height: 300px; }
+
         input, select, button { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; }
-        
         .btn-main { background: var(--primary); color: white; border: none; font-weight: 600; cursor: pointer; }
         .btn-accent { background: var(--accent); color: white; border: none; cursor: pointer; }
         .btn-del { background: #fee2e2; color: #ef4444; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; width: auto; }
 
-        .cat-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; background: #f1f5f9; margin-bottom: 5px; border-radius: 4px; font-size: 0.9rem; }
-        
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th { text-align: left; padding: 12px; background: #f1f5f9; font-size: 0.85rem; }
         td { padding: 12px; border-bottom: 1px solid #edf2f7; }
 
         .summary-banner { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 20px; }
         .stat-card { background: var(--text); color: white; padding: 20px; border-radius: 12px; text-align: center; }
-        .stat-card span { display: block; font-size: 0.8rem; opacity: 0.8; }
-        .stat-card strong { font-size: 1.8rem; }
+        .stat-card strong { font-size: 1.8rem; display: block; }
+
+        .search-box { margin-bottom: 15px; border: 2px solid var(--primary); }
     </style>
 </head>
 <body>
@@ -40,22 +40,40 @@
         <div class="stat-card" style="background: var(--primary);"><span>Yearly Projection</span><strong id="y-total">$0.00</strong></div>
     </div>
 
+    <div class="chart-container">
+        <div class="card">
+            <h2>Monthly Distribution</h2>
+            <canvas id="monthlyChart"></canvas>
+        </div>
+        <div class="card">
+            <h2>Yearly Distribution</h2>
+            <canvas id="yearlyChart"></canvas>
+        </div>
+    </div>
+
     <div class="grid">
         <div class="sidebar">
             <div class="card">
-                <h2>1. Create Expense Heads</h2>
-                <input type="text" id="new-category" placeholder="e.g. Health, Travel">
+                <h2>1. Manage Heads</h2>
+                <input type="text" id="new-category" placeholder="Add New Head...">
                 <button class="btn-accent" id="add-cat-btn">Add Category</button>
                 <div id="category-list"></div>
+            </div>
+            <div class="card">
+                <h2>Monthly Totals by Head</h2>
+                <table id="head-breakdown">
+                    <thead><tr><th>Head</th><th>Total</th></tr></thead>
+                    <tbody id="head-body"></tbody>
+                </table>
             </div>
         </div>
 
         <div class="main">
             <div class="card">
-                <h2>2. Log New Data</h2>
+                <h2>2. Log Expense</h2>
                 <div style="display: grid; grid-template-columns: 1.5fr 1.5fr 1fr auto; gap: 10px;">
                     <input type="date" id="exp-date">
-                    <select id="exp-category"><option value="">Loading Heads...</option></select>
+                    <select id="exp-category"><option value="">Select Head...</option></select>
                     <input type="number" id="exp-amount" placeholder="Amount">
                     <button class="btn-main" id="save-entry-btn">Save</button>
                 </div>
@@ -63,7 +81,8 @@
 
             <div class="card">
                 <h2>Expense History</h2>
-                <table>
+                <input type="text" id="search-input" class="search-box" placeholder="Search by Head or Date..." onkeyup="filterTable()">
+                <table id="history-table">
                     <thead>
                         <tr>
                             <th>Date</th>
@@ -80,11 +99,9 @@
 </div>
 
 <script type="module">
-    // Import Firebase modules
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-    // Your Configuration
     const firebaseConfig = {
         apiKey: "AIzaSyAIATSlAXKTIqJPZqwkkZeX3AJjfR2irfs",
         authDomain: "expensetracker-fbc8c.firebaseapp.com",
@@ -92,80 +109,94 @@
         storageBucket: "expensetracker-fbc8c.firebasestorage.app",
         messagingSenderId: "17366275779",
         appId: "1:17366275779:web:f0a98234a1a87a074db476",
-        databaseURL: "https://expensetracker-fbc8c-default-rtdb.firebaseio.com" // Update if your URL is different
+        databaseURL: "https://expensetracker-fbc8c-default-rtdb.asia-southeast1.firebasedatabase.app"
     };
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
+    let monthlyChart, yearlyChart;
 
-    // --- CATEGORY MANAGEMENT ---
-    const catInput = document.getElementById('new-category');
-    const catBtn = document.getElementById('add-cat-btn');
-    const catList = document.getElementById('category-list');
-    const catSelect = document.getElementById('exp-category');
+    // --- CHART INITIALIZATION ---
+    function initCharts(labels, data) {
+        const ctxM = document.getElementById('monthlyChart').getContext('2d');
+        const ctxY = document.getElementById('yearlyChart').getContext('2d');
+        
+        if(monthlyChart) monthlyChart.destroy();
+        if(yearlyChart) yearlyChart.destroy();
 
-    catBtn.onclick = () => {
-        if(catInput.value) {
-            push(ref(db, 'categories'), catInput.value);
-            catInput.value = '';
-        }
-    };
+        monthlyChart = new Chart(ctxM, { type: 'pie', data: { labels, datasets: [{ data, backgroundColor: ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'] }] }});
+        yearlyChart = new Chart(ctxY, { type: 'pie', data: { labels, datasets: [{ data: data.map(v => v * 12), backgroundColor: ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'] }] }});
+    }
 
+    // --- CATEGORY SYNC ---
     onValue(ref(db, 'categories'), (snapshot) => {
-        catList.innerHTML = '';
-        catSelect.innerHTML = '<option value="">Select Head...</option>';
+        const list = document.getElementById('category-list');
+        const select = document.getElementById('exp-category');
+        list.innerHTML = ''; select.innerHTML = '<option value="">Select Head...</option>';
         snapshot.forEach((child) => {
             const name = child.val();
-            const id = child.key;
-            // List in sidebar
-            catList.innerHTML += `<div class="cat-item">${name} <button class="btn-del" onclick="window.removeData('categories/${id}')">×</button></div>`;
-            // Option in dropdown
-            catSelect.innerHTML += `<option value="${name}">${name}</option>`;
+            list.innerHTML += `<div class="cat-item">${name} <button class="btn-del" onclick="window.removeData('categories/${child.key}')">×</button></div>`;
+            select.innerHTML += `<option value="${name}">${name}</option>`;
         });
     });
 
-    // --- EXPENSE LOGGING ---
-    const saveBtn = document.getElementById('save-entry-btn');
-    saveBtn.onclick = () => {
-        const date = document.getElementById('exp-date').value;
-        const cat = document.getElementById('exp-category').value;
-        const amt = document.getElementById('exp-amount').value;
-
-        if(date && cat && amt) {
-            push(ref(db, 'expenses'), { date, cat, amt: parseFloat(amt) });
-            document.getElementById('exp-amount').value = '';
-        } else { alert("Please fill all fields!"); }
+    document.getElementById('add-cat-btn').onclick = () => {
+        const val = document.getElementById('new-category').value;
+        if(val) push(ref(db, 'categories'), val);
+        document.getElementById('new-category').value = '';
     };
 
+    // --- DATA SYNC & ANALYTICS ---
     onValue(ref(db, 'expenses'), (snapshot) => {
         const table = document.getElementById('log-body');
-        table.innerHTML = '';
+        const headBody = document.getElementById('head-body');
+        table.innerHTML = ''; headBody.innerHTML = '';
+        
         let total = 0;
+        let headTotals = {};
 
         snapshot.forEach((child) => {
             const data = child.val();
-            const id = child.key;
             total += data.amt;
+            headTotals[data.cat] = (headTotals[data.cat] || 0) + data.amt;
+
             table.innerHTML += `
                 <tr>
                     <td>${data.date}</td>
-                    <td><span style="color:var(--primary); font-weight:600">${data.cat}</span></td>
+                    <td class="head-name">${data.cat}</td>
                     <td>$${data.amt.toLocaleString()}</td>
-                    <td><button class="btn-del" onclick="window.removeData('expenses/${id}')">Delete</button></td>
+                    <td><button class="btn-del" onclick="window.removeData('expenses/${child.key}')">Delete</button></td>
                 </tr>`;
         });
 
+        // Update Breakdown Table & Charts
+        Object.keys(headTotals).forEach(head => {
+            headBody.innerHTML += `<tr><td>${head}</td><td>$${headTotals[head].toLocaleString()}</td></tr>`;
+        });
+
+        initCharts(Object.keys(headTotals), Object.values(headTotals));
         document.getElementById('m-total').innerText = `$${total.toLocaleString()}`;
         document.getElementById('y-total').innerText = `$${(total * 12).toLocaleString()}`;
     });
 
-    // Global delete helper
-    window.removeData = (path) => {
-        if(confirm("Are you sure?")) {
-            remove(ref(db, path));
-        }
+    document.getElementById('save-entry-btn').onclick = () => {
+        const date = document.getElementById('exp-date').value;
+        const cat = document.getElementById('exp-category').value;
+        const amt = document.getElementById('exp-amount').value;
+        if(date && cat && amt) push(ref(db, 'expenses'), { date, cat, amt: parseFloat(amt) });
     };
-</script>
 
+    window.removeData = (path) => { if(confirm("Delete this?")) remove(ref(db, path)); };
+
+    // --- SEARCH FILTER ---
+    window.filterTable = () => {
+        const input = document.getElementById("search-input").value.toUpperCase();
+        const rows = document.getElementById("log-body").getElementsByTagName("tr");
+        for (let i = 0; i < rows.length; i++) {
+            const text = rows[i].innerText.toUpperCase();
+            rows[i].style.display = text.indexOf(input) > -1 ? "" : "none";
+        }
+    }
+</script>
 </body>
 </html>
