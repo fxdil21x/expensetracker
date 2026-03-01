@@ -3,125 +3,168 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dynamic Expense Tracker</title>
+    <title>Enterprise Expense Tracker</title>
     <style>
-        :root { --primary: #2563eb; --secondary: #64748b; --bg: #f1f5f9; }
-        body { font-family: sans-serif; background: var(--bg); padding: 20px; color: #333; }
-        .container { max-width: 900px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        :root { --primary: #2563eb; --accent: #10b981; --bg: #f8fafc; --text: #0f172a; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); padding: 20px; margin: 0; }
+        .container { max-width: 1100px; margin: 0 auto; }
         
-        .input-section { display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 10px; margin-bottom: 20px; background: #f8fafc; padding: 15px; border-radius: 8px; }
-        input, select { padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; }
+        .grid { display: grid; grid-template-columns: 300px 1fr; gap: 20px; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; margin-bottom: 20px; }
         
-        button { cursor: pointer; border: none; border-radius: 6px; padding: 10px 15px; transition: 0.2s; }
-        .btn-add { background: var(--primary); color: white; font-weight: bold; }
-        .btn-add:hover { background: #1d4ed8; }
-        .btn-delete { background: #ef4444; color: white; padding: 5px 10px; }
+        h2 { font-size: 1.1rem; margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 10px; color: var(--primary); }
+        
+        input, select, button { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; }
+        
+        .btn-main { background: var(--primary); color: white; border: none; font-weight: 600; cursor: pointer; }
+        .btn-accent { background: var(--accent); color: white; border: none; cursor: pointer; }
+        .btn-del { background: #fee2e2; color: #ef4444; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; width: auto; }
 
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th { text-align: left; border-bottom: 2px solid #e2e8f0; padding: 12px; color: var(--secondary); }
-        td { padding: 12px; border-bottom: 1px solid #f1f5f9; }
+        .cat-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; background: #f1f5f9; margin-bottom: 5px; border-radius: 4px; font-size: 0.9rem; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { text-align: left; padding: 12px; background: #f1f5f9; font-size: 0.85rem; }
+        td { padding: 12px; border-bottom: 1px solid #edf2f7; }
 
-        .summary-boxes { display: flex; gap: 20px; margin-top: 30px; }
-        .box { flex: 1; padding: 20px; border-radius: 10px; text-align: center; color: white; }
-        .monthly-box { background: var(--primary); }
-        .yearly-box { background: #0f172a; }
-        .box h3 { margin: 0; font-size: 0.9rem; opacity: 0.9; }
-        .box p { margin: 10px 0 0; font-size: 1.8rem; font-weight: bold; }
+        .summary-banner { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 20px; }
+        .stat-card { background: var(--text); color: white; padding: 20px; border-radius: 12px; text-align: center; }
+        .stat-card span { display: block; font-size: 0.8rem; opacity: 0.8; }
+        .stat-card strong { font-size: 1.8rem; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Expense Tracker 2026</h2>
-    
-    <div class="input-section">
-        <input type="text" id="expense-name" placeholder="Expense Head (e.g. Rent, Food)">
-        <select id="expense-month">
-            <option value="1">Monthly</option>
-            <option value="12">Yearly (One-time)</option>
-        </select>
-        <input type="number" id="expense-amount" placeholder="Amount ($)">
-        <button class="btn-add" onclick="addExpense()">Add Entry</button>
+    <div class="summary-banner">
+        <div class="stat-card"><span>Monthly Expenses</span><strong id="m-total">$0.00</strong></div>
+        <div class="stat-card" style="background: var(--primary);"><span>Yearly Projection</span><strong id="y-total">$0.00</strong></div>
     </div>
 
-    <table>
-        <thead>
-            <tr>
-                <th>Expense Head</th>
-                <th>Frequency</th>
-                <th>Amount</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody id="expense-list">
-            </tbody>
-    </table>
-
-    <div class="summary-boxes">
-        <div class="box monthly-box">
-            <h3>Total Monthly Expense</h3>
-            <p id="total-monthly">$0.00</p>
+    <div class="grid">
+        <div class="sidebar">
+            <div class="card">
+                <h2>1. Create Expense Heads</h2>
+                <input type="text" id="new-category" placeholder="e.g. Health, Travel">
+                <button class="btn-accent" id="add-cat-btn">Add Category</button>
+                <div id="category-list"></div>
+            </div>
         </div>
-        <div class="box yearly-box">
-            <h3>Projected Yearly Total</h3>
-            <p id="total-yearly">$0.00</p>
+
+        <div class="main">
+            <div class="card">
+                <h2>2. Log New Data</h2>
+                <div style="display: grid; grid-template-columns: 1.5fr 1.5fr 1fr auto; gap: 10px;">
+                    <input type="date" id="exp-date">
+                    <select id="exp-category"><option value="">Loading Heads...</option></select>
+                    <input type="number" id="exp-amount" placeholder="Amount">
+                    <button class="btn-main" id="save-entry-btn">Save</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Expense History</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Head</th>
+                            <th>Amount</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="log-body"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
 
-<script>
-    let expenses = [];
+<script type="module">
+    // Import Firebase modules
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-    function addExpense() {
-        const name = document.getElementById('expense-name').value;
-        const freq = document.getElementById('expense-month').value;
-        const amount = parseFloat(document.getElementById('expense-amount').value);
+    // Your Configuration
+    const firebaseConfig = {
+        apiKey: "AIzaSyAIATSlAXKTIqJPZqwkkZeX3AJjfR2irfs",
+        authDomain: "expensetracker-fbc8c.firebaseapp.com",
+        projectId: "expensetracker-fbc8c",
+        storageBucket: "expensetracker-fbc8c.firebasestorage.app",
+        messagingSenderId: "17366275779",
+        appId: "1:17366275779:web:f0a98234a1a87a074db476",
+        databaseURL: "https://expensetracker-fbc8c-default-rtdb.firebaseio.com" // Update if your URL is different
+    };
 
-        if (name && amount) {
-            expenses.push({ name, freq, amount });
-            updateUI();
-            // Clear inputs
-            document.getElementById('expense-name').value = '';
-            document.getElementById('expense-amount').value = '';
-        } else {
-            alert("Please fill in all fields");
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // --- CATEGORY MANAGEMENT ---
+    const catInput = document.getElementById('new-category');
+    const catBtn = document.getElementById('add-cat-btn');
+    const catList = document.getElementById('category-list');
+    const catSelect = document.getElementById('exp-category');
+
+    catBtn.onclick = () => {
+        if(catInput.value) {
+            push(ref(db, 'categories'), catInput.value);
+            catInput.value = '';
         }
-    }
+    };
 
-    function deleteExpense(index) {
-        expenses.splice(index, 1);
-        updateUI();
-    }
+    onValue(ref(db, 'categories'), (snapshot) => {
+        catList.innerHTML = '';
+        catSelect.innerHTML = '<option value="">Select Head...</option>';
+        snapshot.forEach((child) => {
+            const name = child.val();
+            const id = child.key;
+            // List in sidebar
+            catList.innerHTML += `<div class="cat-item">${name} <button class="btn-del" onclick="window.removeData('categories/${id}')">×</button></div>`;
+            // Option in dropdown
+            catSelect.innerHTML += `<option value="${name}">${name}</option>`;
+        });
+    });
 
-    function updateUI() {
-        const list = document.getElementById('expense-list');
-        list.innerHTML = '';
-        
-        let monthlyTotal = 0;
-        let yearlyTotal = 0;
+    // --- EXPENSE LOGGING ---
+    const saveBtn = document.getElementById('save-entry-btn');
+    saveBtn.onclick = () => {
+        const date = document.getElementById('exp-date').value;
+        const cat = document.getElementById('exp-category').value;
+        const amt = document.getElementById('exp-amount').value;
 
-        expenses.forEach((item, index) => {
-            // Logic: If it's a monthly expense, yearly = monthly * 12
-            // If it's a yearly expense, monthly = yearly / 12
-            const mAmount = item.freq == "1" ? item.amount : (item.amount / 12);
-            const yAmount = item.freq == "1" ? (item.amount * 12) : item.amount;
+        if(date && cat && amt) {
+            push(ref(db, 'expenses'), { date, cat, amt: parseFloat(amt) });
+            document.getElementById('exp-amount').value = '';
+        } else { alert("Please fill all fields!"); }
+    };
 
-            monthlyTotal += mAmount;
-            yearlyTotal += yAmount;
+    onValue(ref(db, 'expenses'), (snapshot) => {
+        const table = document.getElementById('log-body');
+        table.innerHTML = '';
+        let total = 0;
 
-            list.innerHTML += `
+        snapshot.forEach((child) => {
+            const data = child.val();
+            const id = child.key;
+            total += data.amt;
+            table.innerHTML += `
                 <tr>
-                    <td>${item.name}</td>
-                    <td>${item.freq == "1" ? "Monthly" : "Yearly"}</td>
-                    <td>$${item.amount.toLocaleString()}</td>
-                    <td><button class="btn-delete" onclick="deleteExpense(${index})">Remove</button></td>
-                </tr>
-            `;
+                    <td>${data.date}</td>
+                    <td><span style="color:var(--primary); font-weight:600">${data.cat}</span></td>
+                    <td>$${data.amt.toLocaleString()}</td>
+                    <td><button class="btn-del" onclick="window.removeData('expenses/${id}')">Delete</button></td>
+                </tr>`;
         });
 
-        document.getElementById('total-monthly').innerText = `$${monthlyTotal.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
-        document.getElementById('total-yearly').innerText = `$${yearlyTotal.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
-    }
+        document.getElementById('m-total').innerText = `$${total.toLocaleString()}`;
+        document.getElementById('y-total').innerText = `$${(total * 12).toLocaleString()}`;
+    });
+
+    // Global delete helper
+    window.removeData = (path) => {
+        if(confirm("Are you sure?")) {
+            remove(ref(db, path));
+        }
+    };
 </script>
 
 </body>
