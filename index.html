@@ -3,126 +3,136 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cloud Finance Pro | Admin & Auth</title>
+    <title>FinanceCloud Pro | INR</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         :root { --primary: #3b82f6; --accent: #10b981; --bg: #0f172a; --glass: rgba(30, 41, 59, 0.7); --text: #f8fafc; }
         
         body {
             font-family: 'Inter', sans-serif;
             background: linear-gradient(rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.9)), 
-                        url('https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80');
-            background-size: cover; background-attachment: fixed; color: var(--text); margin: 0; padding: 20px;
+                        url('https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?q=80&w=2000');
+            background-size: cover; background-attachment: fixed; color: var(--text); margin: 0; padding: 0;
         }
 
-        /* Auth Overlay Styles */
-        .auth-overlay { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 2000; }
-        .auth-card { background: var(--glass); padding: 35px; border-radius: 24px; border: 1px solid rgba(255,255,255,0.1); width: 90%; max-width: 380px; text-align: center; backdrop-filter: blur(15px); }
-        
-        .container { max-width: 1200px; margin: 0 auto; display: none; }
-        .card { background: var(--glass); backdrop-filter: blur(12px); border-radius: 16px; padding: 20px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        
-        /* Admin Styling */
-        #admin-panel { border: 2px solid var(--accent); display: none; background: rgba(16, 185, 129, 0.1); }
-        .user-row { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: rgba(0,0,0,0.2); margin-bottom: 8px; border-radius: 8px; }
+        /* Navigation Tabs */
+        nav { display: flex; justify-content: center; gap: 20px; padding: 20px; background: rgba(0,0,0,0.3); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 100; }
+        nav div { cursor: pointer; padding: 10px 20px; border-radius: 30px; transition: 0.3s; font-weight: 600; font-size: 0.9rem; }
+        nav div:hover { background: rgba(255,255,255,0.1); }
+        nav div.active { background: var(--primary); color: white; }
 
-        /* UI Elements */
-        input, select, button { width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.3); color: white; font-size: 14px; box-sizing: border-box; }
-        .btn-main { background: var(--primary); border: none; font-weight: 700; cursor: pointer; transition: 0.2s; }
-        .btn-main:hover { opacity: 0.9; transform: translateY(-1px); }
-        .btn-approve { background: var(--accent); width: auto; padding: 6px 15px; margin: 0; border: none; font-weight: bold; }
+        .container { max-width: 1200px; margin: 20px auto; padding: 0 20px; display: none; }
+        .card { background: var(--glass); backdrop-filter: blur(12px); border-radius: 16px; padding: 20px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.1); }
+
+        /* Auth Screen */
+        .auth-overlay { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 2000; }
+        .auth-card { background: var(--glass); padding: 35px; border-radius: 24px; width: 90%; max-width: 380px; text-align: center; }
+        .pass-wrapper { position: relative; width: 100%; }
+        .eye-icon { position: absolute; right: 12px; top: 12px; cursor: pointer; color: #94a3b8; }
+
+        /* Inputs & Tables */
+        input, select, button { width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.3); color: white; box-sizing: border-box; }
+        .btn-main { background: var(--primary); border: none; font-weight: 700; cursor: pointer; }
         
-        .link-text { cursor: pointer; font-size: 0.85rem; color: var(--primary); margin: 5px; display: inline-block; }
-        .link-text:hover { text-decoration: underline; }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; color: #94a3b8; font-size: 0.75rem; padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); }
 
         .grid { display: grid; grid-template-columns: 1fr 2.5fr; gap: 20px; }
         @media (max-width: 850px) { .grid { grid-template-columns: 1fr; } }
-
-        table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; color: #94a3b8; font-size: 0.75rem; padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); text-transform: uppercase; }
-        td { padding: 12px 10px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        
         .hidden { display: none !important; }
+        .total-badge { color: var(--accent); font-weight: bold; }
     </style>
 </head>
 <body>
 
     <div id="auth-screen" class="auth-overlay">
         <div class="auth-card">
-            <h2 id="auth-title" style="margin-bottom: 25px;">Sign In</h2>
+            <h2 id="auth-title">Sign In</h2>
             <input type="email" id="auth-email" placeholder="Email Address">
-            <input type="password" id="auth-pass" placeholder="Password">
-            <button class="btn-main" id="auth-btn">Sign In</button>
-            
-            <div style="margin-top: 10px;">
-                <span id="toggle-auth" class="link-text">Create Account</span>
-                <span id="forgot-btn" class="link-text">Forgot Password?</span>
+            <div class="pass-wrapper">
+                <input type="password" id="auth-pass" placeholder="Password">
+                <i data-lucide="eye" class="eye-icon" id="toggle-pass"></i>
             </div>
-            <div id="auth-status" style="margin-top: 20px; color: #fbbf24; font-size: 0.9rem; font-weight: 500;"></div>
+            <button class="btn-main" id="auth-btn">Sign In</button>
+            <span id="forgot-btn" style="cursor:pointer; font-size:0.8rem; color:var(--primary)">Forgot Password?</span>
+            <p id="toggle-auth" style="cursor:pointer; font-size:0.9rem; margin-top:15px">New? Request Access</p>
+            <div id="auth-status" style="color: #fbbf24; margin-top:10px"></div>
         </div>
     </div>
 
-    <div id="main-container" class="container">
-        
-        <div id="admin-panel" class="card">
-            <h2 style="color: var(--accent); margin-bottom: 15px;">Admin: Approval Requests</h2>
-            <div id="pending-users-list">No pending requests found.</div>
-        </div>
+    <div id="main-app" style="display:none">
+        <nav>
+            <div class="nav-link active" onclick="switchTab('dashboard')">Dashboard</div>
+            <div class="nav-link" onclick="switchTab('analytics')">Monthly Breakdown</div>
+            <div onclick="window.logout()" style="color:#ef4444">Logout</div>
+        </nav>
 
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
-            <h1 style="margin:0; font-size: 1.5rem;">Expense Dashboard</h1>
-            <button onclick="window.logout()" style="width:auto; padding: 8px 15px; background:transparent; border:1px solid #ef4444; color:#ef4444; margin:0;">Logout</button>
-        </div>
-
-        <div class="grid">
-            <div class="sidebar">
-                <div class="card" style="text-align: center;">
-                    <span style="color: #94a3b8; font-size: 0.9rem;">Monthly Total</span>
-                    <div id="m-total" style="font-size: 2.2rem; font-weight: 800; color: var(--primary); margin: 10px 0;">$0.00</div>
-                </div>
-
-                <div class="card">
-                    <h2>Manage Heads</h2>
-                    <input type="text" id="new-category" placeholder="Add New (e.g. Travel)">
-                    <button class="btn-main" onclick="window.addCategory()" style="background:var(--accent)">Add Head</button>
-                    <div id="category-list" style="max-height: 200px; overflow-y: auto;"></div>
-                </div>
-
-                <div class="card">
-                    <h2>Spending Share</h2>
-                    <canvas id="monthlyChart"></canvas>
-                </div>
+        <div id="dashboard-tab" class="container" style="display:block">
+            <div id="admin-panel" class="card" style="display:none; border:2px solid var(--accent)">
+                <h3 style="color:var(--accent)">Admin: Pending Users</h3>
+                <div id="pending-list"></div>
             </div>
 
-            <div class="main">
-                <div class="card">
-                    <h2>Log New Entry</h2>
-                    <div style="display: grid; grid-template-columns: 1.2fr 1.2fr 1fr auto; gap: 10px;">
-                        <input type="date" id="exp-date">
-                        <select id="exp-category"><option>Loading Heads...</option></select>
-                        <input type="number" id="exp-amount" placeholder="Amt">
-                        <button class="btn-main" onclick="window.saveEntry()" style="margin:0">Save</button>
+            <div class="card" style="text-align: center;">
+                <span style="color:#94a3b8">Current Month Spend</span>
+                <div id="m-total" style="font-size: 2.5rem; font-weight: 800; color: var(--primary);">₹0.00</div>
+            </div>
+
+            <div class="grid">
+                <div class="sidebar">
+                    <div class="card">
+                        <h3>Add Head</h3>
+                        <input type="text" id="new-cat" placeholder="e.g. Rent">
+                        <button class="btn-main" onclick="window.addCat()" style="background:var(--accent)">Add</button>
+                        <div id="cat-list"></div>
                     </div>
                 </div>
-
-                <div class="card">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
-                        <h2>Recent History</h2>
-                        <input type="text" id="search-input" placeholder="Search..." onkeyup="filterTable()" style="width: 180px; margin:0;">
+                <div class="main">
+                    <div class="card">
+                        <h3>Log Entry</h3>
+                        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr auto; gap:10px">
+                            <input type="date" id="exp-date">
+                            <select id="exp-cat"><option>Loading...</option></select>
+                            <input type="number" id="exp-amt" placeholder="Amount">
+                            <button class="btn-main" onclick="window.saveEntry()">Save</button>
+                        </div>
                     </div>
-                    <div style="overflow-x: auto;">
+                    <div class="card">
+                        <h3>History</h3>
                         <table>
                             <thead><tr><th>Date</th><th>Head</th><th>Amount</th><th>Action</th></tr></thead>
-                            <tbody id="log-body"></tbody>
+                            <tbody id="hist-body"></tbody>
                         </table>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <div id="analytics-tab" class="container">
+            <div class="card">
+                <h2>Category Breakdown by Month</h2>
+                <div style="overflow-x: auto;">
+                    <table id="breakdown-table">
+                        <thead>
+                            <tr id="breakdown-head"><th>Month</th></tr>
+                        </thead>
+                        <tbody id="breakdown-body"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card">
+                <h2>Visual Distribution</h2>
+                <canvas id="monthlyChart"></canvas>
             </div>
         </div>
     </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getAuth, setPersistence, browserLocalPersistence, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, addDoc, onSnapshot, query, where, orderBy, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -137,143 +147,154 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
-    const ADMIN_EMAIL = "fadilrafeek29@gmail.com";
-    
-    let isLoginMode = true;
+    const ADMIN = "fadilrafeek29@gmail.com";
+    let isLogin = true;
     let myChart;
 
-    // --- Authentication UI Logic ---
-    const toggleBtn = document.getElementById('toggle-auth');
-    const authBtn = document.getElementById('auth-btn');
-    const authTitle = document.getElementById('auth-title');
-    const authStatus = document.getElementById('auth-status');
-
-    toggleBtn.onclick = () => {
-        isLoginMode = !isLoginMode;
-        authTitle.innerText = isLoginMode ? "Sign In" : "Request Access";
-        authBtn.innerText = isLoginMode ? "Sign In" : "Sign Up";
-        toggleBtn.innerText = isLoginMode ? "Create Account" : "Back to Login";
+    // --- Tab Switching ---
+    window.switchTab = (tab) => {
+        document.querySelectorAll('.container').forEach(c => c.style.display = 'none');
+        document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
+        document.getElementById(tab + '-tab').style.display = 'block';
+        event.currentTarget.classList.add('active');
     };
 
-    document.getElementById('forgot-btn').onclick = async () => {
-        const email = document.getElementById('auth-email').value;
-        if(!email) return alert("Please enter your email address first.");
-        try {
-            await sendPasswordResetEmail(auth, email);
-            alert("Password reset email sent!");
-        } catch (e) { alert(e.message); }
+    // --- Password Toggle ---
+    document.getElementById('toggle-pass').onclick = () => {
+        const p = document.getElementById('auth-pass');
+        p.type = p.type === 'password' ? 'text' : 'password';
     };
 
-    authBtn.onclick = async () => {
-        const email = document.getElementById('auth-email').value;
-        const pass = document.getElementById('auth-pass').value;
+    // --- Auth Logic (Persistent) ---
+    setPersistence(auth, browserLocalPersistence);
+
+    document.getElementById('auth-btn').onclick = async () => {
+        const e = document.getElementById('auth-email').value;
+        const p = document.getElementById('auth-pass').value;
         try {
-            if(isLoginMode) {
-                await signInWithEmailAndPassword(auth, email, pass);
-            } else {
-                const res = await createUserWithEmailAndPassword(auth, email, pass);
-                await setDoc(doc(db, "users", res.user.uid), { email, approved: false, uid: res.user.uid });
-                authStatus.innerText = "Request Sent! Fadil will review your account.";
+            if(isLogin) await signInWithEmailAndPassword(auth, e, p);
+            else {
+                const res = await createUserWithEmailAndPassword(auth, e, p);
+                await setDoc(doc(db, "users", res.user.uid), { email: e, approved: false, uid: res.user.uid });
+                alert("Request Sent to Fadil!");
             }
-        } catch (e) { alert(e.message); }
+        } catch (err) { alert(err.message); }
     };
 
-    window.logout = () => signOut(auth);
-
-    // --- Core State Logic ---
     onAuthStateChanged(auth, async (user) => {
-        if (user) {
-            const userDoc = await getDoc(doc(db, "users", user.uid));
-            const data = userDoc.data();
-            
-            if (data && data.approved) {
+        if(user) {
+            const uDoc = await getDoc(doc(db, "users", user.uid));
+            if(uDoc.exists() && (uDoc.data().approved || user.email === ADMIN)) {
                 document.getElementById('auth-screen').classList.add('hidden');
-                document.getElementById('main-container').style.display = 'block';
-                if(user.email === ADMIN_EMAIL) loadAdminPanel();
-                initUserData(user.uid);
+                document.getElementById('main-app').style.display = 'block';
+                if(user.email === ADMIN) loadAdmin();
+                initApp(user.uid);
             } else {
-                authStatus.innerText = "Status: Pending Admin Approval.";
-                if(user.email === ADMIN_EMAIL) {
-                    await updateDoc(doc(db, "users", user.uid), { approved: true });
-                    location.reload();
-                }
+                document.getElementById('auth-status').innerText = "Wait for Fadil to approve.";
             }
         } else {
             document.getElementById('auth-screen').classList.remove('hidden');
-            document.getElementById('main-container').style.display = 'none';
+            document.getElementById('main-app').style.display = 'none';
         }
     });
 
-    // --- Admin Functions ---
-    function loadAdminPanel() {
-        document.getElementById('admin-panel').style.display = 'block';
-        onSnapshot(query(collection(db, "users"), where("approved", "==", false)), (snap) => {
-            const list = document.getElementById('pending-users-list');
-            list.innerHTML = '';
-            if(snap.empty) list.innerHTML = "No pending requests.";
-            snap.forEach(u => {
-                list.innerHTML += `<div class="user-row"><span>${u.data().email}</span> <button class="btn-approve" onclick="window.approveUser('${u.id}')">Approve</button></div>`;
-            });
-        });
-    }
-    window.approveUser = (uid) => updateDoc(doc(db, "users", uid), { approved: true });
+    window.logout = () => signOut(auth);
 
-    // --- User Dashboard Data ---
-    function initUserData(uid) {
-        // Categories Sync
-        onSnapshot(query(collection(db, "categories"), where("uid", "==", uid)), (snap) => {
-            const list = document.getElementById('category-list');
-            const select = document.getElementById('exp-category');
-            list.innerHTML = ''; select.innerHTML = '<option value="">Select Head...</option>';
+    // --- App Data ---
+    function initApp(uid) {
+        // Categories
+        onSnapshot(query(collection(db,"categories"), where("uid","==",uid)), snap => {
+            const list = document.getElementById('cat-list');
+            const select = document.getElementById('exp-cat');
+            list.innerHTML = ''; select.innerHTML = '<option value="">Select Head</option>';
             snap.forEach(d => {
-                list.innerHTML += `<div class="user-row" style="font-size:0.85rem"><span>${d.data().name}</span> <button onclick="window.delDoc('categories','${d.id}')" style="width:auto; color:red; border:none; background:none; cursor:pointer">×</button></div>`;
+                list.innerHTML += `<div style="display:flex; justify-content:space-between; padding:5px; border-bottom:1px solid #333">${d.data().name} <span onclick="window.delDoc('categories','${d.id}')" style="color:red; cursor:pointer">×</span></div>`;
                 select.innerHTML += `<option value="${d.data().name}">${d.data().name}</option>`;
             });
         });
 
-        // Expenses Sync
-        onSnapshot(query(collection(db, "expenses"), where("uid", "==", uid), orderBy("date", "desc")), (snap) => {
-            const body = document.getElementById('log-body');
-            body.innerHTML = ''; let total = 0; let heads = {};
+        // Expenses & Analytics
+        onSnapshot(query(collection(db,"expenses"), where("uid","==",uid), orderBy("date","desc")), snap => {
+            const body = document.getElementById('hist-body');
+            const bBody = document.getElementById('breakdown-body');
+            const bHead = document.getElementById('breakdown-head');
+            body.innerHTML = ''; bBody.innerHTML = '';
+            
+            let total = 0;
+            let monthMatrix = {}; // { "2023-10": { "Food": 100 } }
+            let allHeads = new Set();
+
             snap.forEach(d => {
                 const item = d.data();
                 total += item.amt;
-                heads[item.cat] = (heads[item.cat] || 0) + item.amt;
-                body.innerHTML += `<tr><td>${item.date}</td><td><span style="color:var(--primary)">${item.cat}</span></td><td>$${item.amt.toLocaleString()}</td><td><button onclick="window.delDoc('expenses','${d.id}')" style="color:#fca5a5; border:none; background:none; cursor:pointer">Delete</button></td></tr>`;
+                const mKey = item.date.substring(0, 7); // YYYY-MM
+                allHeads.add(item.cat);
+                
+                if(!monthMatrix[mKey]) monthMatrix[mKey] = {};
+                monthMatrix[mKey][item.cat] = (monthMatrix[mKey][item.cat] || 0) + item.amt;
+
+                body.innerHTML += `<tr><td>${item.date}</td><td>${item.cat}</td><td>₹${item.amt.toLocaleString()}</td><td><button onclick="window.delDoc('expenses','${d.id}')" style="color:red; border:none; background:none; cursor:pointer">Del</button></td></tr>`;
             });
-            document.getElementById('m-total').innerText = `$${total.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
-            updateChart(Object.keys(heads), Object.values(heads));
+
+            // Update Breakdown Table
+            const sortedHeads = Array.from(allHeads);
+            bHead.innerHTML = `<th>Month</th>` + sortedHeads.map(h => `<th>${h}</th>`).join('') + `<th>Total</th>`;
+            
+            Object.keys(monthMatrix).sort().reverse().forEach(month => {
+                let mTotal = 0;
+                let row = `<td>${month}</td>`;
+                sortedHeads.forEach(h => {
+                    const val = monthMatrix[month][h] || 0;
+                    mTotal += val;
+                    row += `<td>₹${val}</td>`;
+                });
+                row += `<td class="total-badge">₹${mTotal}</td>`;
+                bBody.innerHTML += `<tr>${row}</tr>`;
+            });
+
+            document.getElementById('m-total').innerText = `₹${total.toLocaleString()}`;
+            updateChart(sortedHeads, sortedHeads.map(h => {
+                let hSum = 0;
+                Object.values(monthMatrix).forEach(m => hSum += (m[h] || 0));
+                return hSum;
+            }));
         });
     }
 
-    window.addCategory = () => {
-        const input = document.getElementById('new-category');
-        if(input.value) addDoc(collection(db, "categories"), { name: input.value, uid: auth.currentUser.uid });
-        input.value = '';
+    window.addCat = () => {
+        const n = document.getElementById('new-cat').value;
+        if(n) addDoc(collection(db,"categories"), { name: n, uid: auth.currentUser.uid });
+        document.getElementById('new-cat').value = '';
     };
 
     window.saveEntry = () => {
-        const date = document.getElementById('exp-date').value;
-        const cat = document.getElementById('exp-category').value;
-        const amt = parseFloat(document.getElementById('exp-amount').value);
-        if(date && cat && amt) addDoc(collection(db, "expenses"), { date, cat, amt, uid: auth.currentUser.uid });
+        const d = document.getElementById('exp-date').value;
+        const c = document.getElementById('exp-cat').value;
+        const a = parseFloat(document.getElementById('exp-amt').value);
+        if(d && c && a) addDoc(collection(db,"expenses"), { date: d, cat: c, amt: a, uid: auth.currentUser.uid });
     };
 
-    window.delDoc = (c, id) => confirm("Delete permanently?") && deleteDoc(doc(db, c, id));
+    window.delDoc = (c,id) => confirm("Delete?") && deleteDoc(doc(db,c,id));
+
+    function loadAdmin() {
+        document.getElementById('admin-panel').style.display = 'block';
+        onSnapshot(query(collection(db,"users"), where("approved","==",false)), snap => {
+            const list = document.getElementById('pending-list');
+            list.innerHTML = '';
+            snap.forEach(u => {
+                list.innerHTML += `<div style="display:flex; justify-content:space-between; margin:10px 0">${u.data().email} <button onclick="window.approve('${u.id}')" style="width:auto; padding:5px 10px; background:var(--accent); border:none; border-radius:5px; color:white">Approve</button></div>`;
+            });
+        });
+    }
+    window.approve = (id) => updateDoc(doc(db, "users", id), { approved: true });
 
     function updateChart(l, v) {
         const ctx = document.getElementById('monthlyChart').getContext('2d');
         if(myChart) myChart.destroy();
-        myChart = new Chart(ctx, { type: 'doughnut', data: { labels: l, datasets: [{ data: v, backgroundColor: ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899'], borderWidth: 0 }] }, options: { plugins: { legend: { labels: { color: 'white', font: { size: 10 } } } } } });
+        myChart = new Chart(ctx, { type: 'pie', data: { labels: l, datasets: [{ data: v, backgroundColor: ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899'], borderWidth: 0 }] }, options: { plugins: { legend: { labels: { color: 'white' } } } } });
     }
 
-    window.filterTable = () => {
-        const val = document.getElementById('search-input').value.toUpperCase();
-        const rows = document.getElementById('log-body').getElementsByTagName('tr');
-        for (let row of rows) {
-            row.style.display = row.innerText.toUpperCase().includes(val) ? "" : "none";
-        }
-    };
+    lucide.createIcons();
 </script>
 </body>
 </html>
