@@ -3,137 +3,154 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FinanceCloud Pro | INR</title>
+    <title>FinanceCloud Pro | Monthly Analytics</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        :root { --primary: #3b82f6; --accent: #10b981; --bg: #0f172a; --glass: rgba(30, 41, 59, 0.7); --text: #f8fafc; }
+        :root { --primary: #3b82f6; --accent: #10b981; --bg: #0f172a; --glass: rgba(30, 41, 59, 0.6); --border: rgba(255, 255, 255, 0.1); --text: #f8fafc; }
         
         body {
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.9)), 
-                        url('https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?q=80&w=2000');
-            background-size: cover; background-attachment: fixed; color: var(--text); margin: 0; padding: 0;
+            background: radial-gradient(circle at top right, #1e293b, #0f172a);
+            color: var(--text); margin: 0; min-height: 100vh;
         }
 
-        /* Navigation Tabs */
-        nav { display: flex; justify-content: center; gap: 20px; padding: 20px; background: rgba(0,0,0,0.3); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 100; }
-        nav div { cursor: pointer; padding: 10px 20px; border-radius: 30px; transition: 0.3s; font-weight: 600; font-size: 0.9rem; }
-        nav div:hover { background: rgba(255,255,255,0.1); }
-        nav div.active { background: var(--primary); color: white; }
+        /* Sidebar & Layout */
+        .layout { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
+        @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } .sidebar { display: none; } }
 
-        .container { max-width: 1200px; margin: 20px auto; padding: 0 20px; display: none; }
-        .card { background: var(--glass); backdrop-filter: blur(12px); border-radius: 16px; padding: 20px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.1); }
+        .sidebar { background: rgba(15, 23, 42, 0.8); border-right: 1px solid var(--border); padding: 30px 20px; }
+        .main-content { padding: 30px; }
+
+        .nav-item { 
+            display: flex; align-items: center; gap: 12px; padding: 12px 15px; 
+            border-radius: 10px; cursor: pointer; transition: 0.3s; margin-bottom: 8px; color: #94a3b8;
+        }
+        .nav-item:hover, .nav-item.active { background: var(--primary); color: white; }
+
+        /* Dashboard Components */
+        .card { background: var(--glass); backdrop-filter: blur(15px); border-radius: 20px; padding: 25px; border: 1px solid var(--border); margin-bottom: 20px; }
+        .header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; flex-wrap: wrap; gap: 15px; }
+        
+        /* Form Elements */
+        input, select, button { 
+            background: rgba(0,0,0,0.3); border: 1px solid var(--border); padding: 12px; 
+            border-radius: 10px; color: white; width: 100%; transition: 0.3s;
+        }
+        select { cursor: pointer; }
+        .btn-action { background: var(--primary); border: none; font-weight: 600; cursor: pointer; margin-top: 10px; }
+        .btn-action:hover { background: #2563eb; }
+
+        /* Stats Display */
+        .stat-val { font-size: 2.2rem; font-weight: 800; color: var(--primary); }
+        
+        /* Table */
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; color: #64748b; font-size: 0.8rem; padding: 12px; border-bottom: 1px solid var(--border); text-transform: uppercase; }
+        td { padding: 15px 12px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+
+        /* Month Selector Highlight */
+        .month-selector { max-width: 250px; border: 2px solid var(--primary); font-weight: bold; }
 
         /* Auth Screen */
-        .auth-overlay { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 2000; }
-        .auth-card { background: var(--glass); padding: 35px; border-radius: 24px; width: 90%; max-width: 380px; text-align: center; }
-        .pass-wrapper { position: relative; width: 100%; }
-        .eye-icon { position: absolute; right: 12px; top: 12px; cursor: pointer; color: #94a3b8; }
-
-        /* Inputs & Tables */
-        input, select, button { width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.3); color: white; box-sizing: border-box; }
-        .btn-main { background: var(--primary); border: none; font-weight: 700; cursor: pointer; }
-        
-        table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; color: #94a3b8; font-size: 0.75rem; padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); }
-        td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); }
-
-        .grid { display: grid; grid-template-columns: 1fr 2.5fr; gap: 20px; }
-        @media (max-width: 850px) { .grid { grid-template-columns: 1fr; } }
-        
+        .auth-overlay { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 5000; }
+        .auth-card { background: var(--glass); padding: 40px; border-radius: 24px; width: 350px; text-align: center; border: 1px solid var(--border); }
         .hidden { display: none !important; }
-        .total-badge { color: var(--accent); font-weight: bold; }
     </style>
 </head>
 <body>
 
     <div id="auth-screen" class="auth-overlay">
         <div class="auth-card">
-            <h2 id="auth-title">Sign In</h2>
-            <input type="email" id="auth-email" placeholder="Email Address">
-            <div class="pass-wrapper">
+            <h2 id="auth-title">Welcome Back</h2>
+            <input type="email" id="auth-email" placeholder="Email">
+            <div style="position:relative">
                 <input type="password" id="auth-pass" placeholder="Password">
-                <i data-lucide="eye" class="eye-icon" id="toggle-pass"></i>
+                <i data-lucide="eye" onclick="togglePass()" style="position:absolute; right:12px; top:12px; cursor:pointer; color:#64748b"></i>
             </div>
-            <button class="btn-main" id="auth-btn">Sign In</button>
-            <span id="forgot-btn" style="cursor:pointer; font-size:0.8rem; color:var(--primary)">Forgot Password?</span>
-            <p id="toggle-auth" style="cursor:pointer; font-size:0.9rem; margin-top:15px">New? Request Access</p>
-            <div id="auth-status" style="color: #fbbf24; margin-top:10px"></div>
+            <button class="btn-action" id="auth-btn">Sign In</button>
+            <p id="toggle-auth" style="font-size:0.8rem; cursor:pointer; margin-top:15px; color:var(--primary)">Create Account</p>
+            <p id="forgot-btn" style="font-size:0.8rem; cursor:pointer; color:#64748b">Forgot Password?</p>
+            <div id="auth-status" style="color:#fbbf24; margin-top:10px"></div>
         </div>
     </div>
 
-    <div id="main-app" style="display:none">
-        <nav>
-            <div class="nav-link active" onclick="switchTab('dashboard')">Dashboard</div>
-            <div class="nav-link" onclick="switchTab('analytics')">Monthly Breakdown</div>
-            <div onclick="window.logout()" style="color:#ef4444">Logout</div>
-        </nav>
+    <div id="main-app" class="layout hidden">
+        <aside class="sidebar">
+            <h2 style="color:var(--primary); margin-bottom:40px">FinanceCloud</h2>
+            <div class="nav-item active" onclick="showSection('dashboard')"><i data-lucide="layout-dashboard"></i> Dashboard</div>
+            <div class="nav-item" onclick="showSection('add-entry')"><i data-lucide="plus-circle"></i> Add Expense</div>
+            <div class="nav-item" onclick="showSection('admin')" id="nav-admin" style="display:none"><i data-lucide="shield-check"></i> Admin Panel</div>
+            <div class="nav-item" onclick="window.logout()" style="margin-top:auto; color:#ef4444"><i data-lucide="log-out"></i> Logout</div>
+        </aside>
 
-        <div id="dashboard-tab" class="container" style="display:block">
-            <div id="admin-panel" class="card" style="display:none; border:2px solid var(--accent)">
-                <h3 style="color:var(--accent)">Admin: Pending Users</h3>
-                <div id="pending-list"></div>
-            </div>
-
-            <div class="card" style="text-align: center;">
-                <span style="color:#94a3b8">Current Month Spend</span>
-                <div id="m-total" style="font-size: 2.5rem; font-weight: 800; color: var(--primary);">₹0.00</div>
-            </div>
-
-            <div class="grid">
-                <div class="sidebar">
-                    <div class="card">
-                        <h3>Add Head</h3>
-                        <input type="text" id="new-cat" placeholder="e.g. Rent">
-                        <button class="btn-main" onclick="window.addCat()" style="background:var(--accent)">Add</button>
-                        <div id="cat-list"></div>
-                    </div>
+        <main class="main-content">
+            <div class="header-flex">
+                <div>
+                    <h1 style="margin:0">Analytics Overview</h1>
+                    <p style="color:#64748b">Track your spending for specific months</p>
                 </div>
-                <div class="main">
-                    <div class="card">
-                        <h3>Log Entry</h3>
-                        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr auto; gap:10px">
-                            <input type="date" id="exp-date">
-                            <select id="exp-cat"><option>Loading...</option></select>
-                            <input type="number" id="exp-amt" placeholder="Amount">
-                            <button class="btn-main" onclick="window.saveEntry()">Save</button>
-                        </div>
-                    </div>
-                    <div class="card">
-                        <h3>History</h3>
-                        <table>
-                            <thead><tr><th>Date</th><th>Head</th><th>Amount</th><th>Action</th></tr></thead>
-                            <tbody id="hist-body"></tbody>
-                        </table>
-                    </div>
+                <div>
+                    <label style="font-size:0.8rem; color:#64748b">Select Billing Month:</label>
+                    <select id="global-month-filter" class="month-selector" onchange="filterAllData()"></select>
                 </div>
             </div>
-        </div>
 
-        <div id="analytics-tab" class="container">
-            <div class="card">
-                <h2>Category Breakdown by Month</h2>
-                <div style="overflow-x: auto;">
-                    <table id="breakdown-table">
-                        <thead>
-                            <tr id="breakdown-head"><th>Month</th></tr>
-                        </thead>
-                        <tbody id="breakdown-body"></tbody>
+            <div id="dashboard-section">
+                <div style="display:grid; grid-template-columns: 1.5fr 1fr; gap:20px">
+                    <div class="card">
+                        <h3>Spending Distribution (%)</h3>
+                        <canvas id="mainPieChart"></canvas>
+                    </div>
+                    <div class="card" style="display:flex; flex-direction:column; justify-content:center; text-align:center">
+                        <span style="color:#64748b">Monthly Total</span>
+                        <div id="display-total" class="stat-val">₹0.00</div>
+                        <hr style="width:100%; border:0; border-top:1px solid var(--border); margin:20px 0">
+                        <div id="mini-breakdown" style="text-align:left"></div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top:20px">
+                    <h3>Transaction History for Selected Month</h3>
+                    <table>
+                        <thead><tr><th>Date</th><th>Category</th><th>Amount</th><th>Action</th></tr></thead>
+                        <tbody id="filtered-history"></tbody>
                     </table>
                 </div>
             </div>
-            <div class="card">
-                <h2>Visual Distribution</h2>
-                <canvas id="monthlyChart"></canvas>
+
+            <div id="add-entry-section" class="hidden">
+                <div class="grid" style="grid-template-columns: 1fr 1fr">
+                    <div class="card">
+                        <h3>New Expense</h3>
+                        <input type="date" id="exp-date">
+                        <select id="exp-cat"><option>Loading Heads...</option></select>
+                        <input type="number" id="exp-amt" placeholder="Amount (₹)">
+                        <button class="btn-action" onclick="saveEntry()">Save Transaction</button>
+                    </div>
+                    <div class="card">
+                        <h3>Manage Heads</h3>
+                        <input type="text" id="new-cat-name" placeholder="Category Name">
+                        <button class="btn-action" onclick="addHead()" style="background:var(--accent)">Create Head</button>
+                        <div id="cat-list-display" style="margin-top:15px"></div>
+                    </div>
+                </div>
             </div>
-        </div>
+
+            <div id="admin-section" class="hidden">
+                <div class="card">
+                    <h2 style="color:var(--accent)">Pending User Approvals</h2>
+                    <div id="admin-user-list"></div>
+                </div>
+            </div>
+        </main>
     </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAuth, setPersistence, browserLocalPersistence, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, addDoc, onSnapshot, query, where, orderBy, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getAuth, setPersistence, browserLocalPersistence, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, addDoc, onSnapshot, query, where, orderBy, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyAIATSlAXKTIqJPZqwkkZeX3AJjfR2irfs",
@@ -147,152 +164,204 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
-    const ADMIN = "fadilrafeek29@gmail.com";
-    let isLogin = true;
-    let myChart;
+    const ADMIN_EMAIL = "fadilrafeek29@gmail.com";
+    
+    let isLoginMode = true;
+    let globalExpenses = [];
+    let myChart = null;
 
-    // --- Tab Switching ---
-    window.switchTab = (tab) => {
-        document.querySelectorAll('.container').forEach(c => c.style.display = 'none');
-        document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
-        document.getElementById(tab + '-tab').style.display = 'block';
+    // --- Authentication Persistence ---
+    setPersistence(auth, browserLocalPersistence);
+
+    // --- Tab Management ---
+    window.showSection = (section) => {
+        ['dashboard-section', 'add-entry-section', 'admin-section'].forEach(id => document.getElementById(id).classList.add('hidden'));
+        document.getElementById(section + '-section').classList.remove('hidden');
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
         event.currentTarget.classList.add('active');
     };
 
-    // --- Password Toggle ---
-    document.getElementById('toggle-pass').onclick = () => {
-        const p = document.getElementById('auth-pass');
-        p.type = p.type === 'password' ? 'text' : 'password';
+    // --- Auth Logic ---
+    onAuthStateChanged(auth, async (user) => {
+        if(user) {
+            const uDoc = await getDoc(doc(db, "users", user.uid));
+            if(uDoc.exists() && (uDoc.data().approved || user.email === ADMIN_EMAIL)) {
+                document.getElementById('auth-screen').classList.add('hidden');
+                document.getElementById('main-app').classList.remove('hidden');
+                if(user.email === ADMIN_EMAIL) {
+                    document.getElementById('nav-admin').style.display = 'flex';
+                    initAdminPanel();
+                }
+                loadCoreData(user.uid);
+            } else {
+                document.getElementById('auth-status').innerText = "Status: Awaiting Approval";
+            }
+        } else {
+            document.getElementById('auth-screen').classList.remove('hidden');
+            document.getElementById('main-app').classList.add('hidden');
+        }
+    });
+
+    // --- Data Loading ---
+    function loadCoreData(uid) {
+        // Categories
+        onSnapshot(query(collection(db, "categories"), where("uid", "==", uid)), snap => {
+            const select = document.getElementById('exp-cat');
+            const list = document.getElementById('cat-list-display');
+            select.innerHTML = '<option value="">Choose Head</option>';
+            list.innerHTML = '';
+            snap.forEach(d => {
+                select.innerHTML += `<option value="${d.data().name}">${d.data().name}</option>`;
+                list.innerHTML += `<div style="display:flex; justify-content:space-between; margin-bottom:5px"><span>${d.data().name}</span> <span onclick="window.delDoc('categories','${d.id}')" style="color:red; cursor:pointer">×</span></div>`;
+            });
+        });
+
+        // Expenses
+        onSnapshot(query(collection(db, "expenses"), where("uid", "==", uid), orderBy("date", "desc")), snap => {
+            globalExpenses = [];
+            const months = new Set();
+            snap.forEach(d => {
+                const data = { ...d.data(), id: d.id };
+                globalExpenses.push(data);
+                months.add(data.date.substring(0, 7)); // YYYY-MM
+            });
+
+            // Populate Month Filter
+            const filter = document.getElementById('global-month-filter');
+            const currentVal = filter.value;
+            filter.innerHTML = '';
+            Array.from(months).sort().reverse().forEach(m => {
+                filter.innerHTML += `<option value="${m}">${m}</option>`;
+            });
+            if(currentVal && months.has(currentVal)) filter.value = currentVal;
+            
+            filterAllData();
+        });
+    }
+
+    // --- Filter & Chart Logic ---
+    window.filterAllData = () => {
+        const selectedMonth = document.getElementById('global-month-filter').value;
+        const filtered = globalExpenses.filter(e => e.date.startsWith(selectedMonth));
+        
+        // History Table
+        const tbody = document.getElementById('filtered-history');
+        tbody.innerHTML = '';
+        let total = 0;
+        let headGroups = {};
+
+        filtered.forEach(e => {
+            total += e.amt;
+            headGroups[e.cat] = (headGroups[e.cat] || 0) + e.amt;
+            tbody.innerHTML += `<tr><td>${e.date}</td><td>${e.cat}</td><td>₹${e.amt.toLocaleString()}</td><td><button onclick="window.delDoc('expenses','${e.id}')" style="color:red; background:none; border:none; cursor:pointer">Delete</button></td></tr>`;
+        });
+
+        document.getElementById('display-total').innerText = `₹${total.toLocaleString()}`;
+        
+        // Mini Breakdown Text
+        const mini = document.getElementById('mini-breakdown');
+        mini.innerHTML = Object.entries(headGroups).map(([name, val]) => `
+            <div style="display:flex; justify-content:space-between; margin-bottom:5px">
+                <span style="font-size:0.85rem">${name}:</span>
+                <span style="font-weight:bold">₹${val.toLocaleString()}</span>
+            </div>
+        `).join('');
+
+        updatePieChart(headGroups);
     };
 
-    // --- Auth Logic (Persistent) ---
-    setPersistence(auth, browserLocalPersistence);
+    function updatePieChart(data) {
+        const ctx = document.getElementById('mainPieChart').getContext('2d');
+        if(myChart) myChart.destroy();
+        
+        const labels = Object.keys(data);
+        const values = Object.values(data);
 
+        myChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: values,
+                    backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4'],
+                    borderWidth: 0,
+                    hoverOffset: 15
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom', labels: { color: 'white', padding: 20 } },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.label || '';
+                                let value = context.parsed;
+                                let total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                let percentage = ((value / total) * 100).toFixed(1) + "%";
+                                return `${label}: ₹${value.toLocaleString()} (${percentage})`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // --- Admin Functions ---
+    function initAdminPanel() {
+        onSnapshot(query(collection(db, "users"), where("approved", "==", false)), snap => {
+            const list = document.getElementById('admin-user-list');
+            list.innerHTML = '';
+            snap.forEach(u => {
+                list.innerHTML += `<div class="card" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px">
+                    <span>${u.data().email}</span>
+                    <button class="btn-action" style="width:auto; background:var(--accent)" onclick="window.approveUser('${u.id}')">Approve Access</button>
+                </div>`;
+            });
+        });
+    }
+
+    // --- Global Actions ---
+    window.addHead = () => {
+        const val = document.getElementById('new-cat-name').value;
+        if(val) addDoc(collection(db, "categories"), { name: val, uid: auth.currentUser.uid });
+        document.getElementById('new-cat-name').value = '';
+    };
+
+    window.saveEntry = () => {
+        const date = document.getElementById('exp-date').value;
+        const cat = document.getElementById('exp-cat').value;
+        const amt = parseFloat(document.getElementById('exp-amt').value);
+        if(date && cat && amt) addDoc(collection(db, "expenses"), { date, cat, amt, uid: auth.currentUser.uid });
+    };
+
+    window.delDoc = (c, id) => confirm("Delete this record?") && deleteDoc(doc(db, c, id));
+    window.approveUser = (uid) => updateDoc(doc(db, "users", uid), { approved: true });
+    window.logout = () => signOut(auth);
+    window.togglePass = () => { const p = document.getElementById('auth-pass'); p.type = p.type === 'password' ? 'text' : 'password'; };
+
+    // Auth Button Logic
     document.getElementById('auth-btn').onclick = async () => {
         const e = document.getElementById('auth-email').value;
         const p = document.getElementById('auth-pass').value;
         try {
-            if(isLogin) await signInWithEmailAndPassword(auth, e, p);
+            if(isLoginMode) await signInWithEmailAndPassword(auth, e, p);
             else {
                 const res = await createUserWithEmailAndPassword(auth, e, p);
                 await setDoc(doc(db, "users", res.user.uid), { email: e, approved: false, uid: res.user.uid });
-                alert("Request Sent to Fadil!");
+                alert("Request sent!");
             }
         } catch (err) { alert(err.message); }
     };
 
-    onAuthStateChanged(auth, async (user) => {
-        if(user) {
-            const uDoc = await getDoc(doc(db, "users", user.uid));
-            if(uDoc.exists() && (uDoc.data().approved || user.email === ADMIN)) {
-                document.getElementById('auth-screen').classList.add('hidden');
-                document.getElementById('main-app').style.display = 'block';
-                if(user.email === ADMIN) loadAdmin();
-                initApp(user.uid);
-            } else {
-                document.getElementById('auth-status').innerText = "Wait for Fadil to approve.";
-            }
-        } else {
-            document.getElementById('auth-screen').classList.remove('hidden');
-            document.getElementById('main-app').style.display = 'none';
-        }
-    });
-
-    window.logout = () => signOut(auth);
-
-    // --- App Data ---
-    function initApp(uid) {
-        // Categories
-        onSnapshot(query(collection(db,"categories"), where("uid","==",uid)), snap => {
-            const list = document.getElementById('cat-list');
-            const select = document.getElementById('exp-cat');
-            list.innerHTML = ''; select.innerHTML = '<option value="">Select Head</option>';
-            snap.forEach(d => {
-                list.innerHTML += `<div style="display:flex; justify-content:space-between; padding:5px; border-bottom:1px solid #333">${d.data().name} <span onclick="window.delDoc('categories','${d.id}')" style="color:red; cursor:pointer">×</span></div>`;
-                select.innerHTML += `<option value="${d.data().name}">${d.data().name}</option>`;
-            });
-        });
-
-        // Expenses & Analytics
-        onSnapshot(query(collection(db,"expenses"), where("uid","==",uid), orderBy("date","desc")), snap => {
-            const body = document.getElementById('hist-body');
-            const bBody = document.getElementById('breakdown-body');
-            const bHead = document.getElementById('breakdown-head');
-            body.innerHTML = ''; bBody.innerHTML = '';
-            
-            let total = 0;
-            let monthMatrix = {}; // { "2023-10": { "Food": 100 } }
-            let allHeads = new Set();
-
-            snap.forEach(d => {
-                const item = d.data();
-                total += item.amt;
-                const mKey = item.date.substring(0, 7); // YYYY-MM
-                allHeads.add(item.cat);
-                
-                if(!monthMatrix[mKey]) monthMatrix[mKey] = {};
-                monthMatrix[mKey][item.cat] = (monthMatrix[mKey][item.cat] || 0) + item.amt;
-
-                body.innerHTML += `<tr><td>${item.date}</td><td>${item.cat}</td><td>₹${item.amt.toLocaleString()}</td><td><button onclick="window.delDoc('expenses','${d.id}')" style="color:red; border:none; background:none; cursor:pointer">Del</button></td></tr>`;
-            });
-
-            // Update Breakdown Table
-            const sortedHeads = Array.from(allHeads);
-            bHead.innerHTML = `<th>Month</th>` + sortedHeads.map(h => `<th>${h}</th>`).join('') + `<th>Total</th>`;
-            
-            Object.keys(monthMatrix).sort().reverse().forEach(month => {
-                let mTotal = 0;
-                let row = `<td>${month}</td>`;
-                sortedHeads.forEach(h => {
-                    const val = monthMatrix[month][h] || 0;
-                    mTotal += val;
-                    row += `<td>₹${val}</td>`;
-                });
-                row += `<td class="total-badge">₹${mTotal}</td>`;
-                bBody.innerHTML += `<tr>${row}</tr>`;
-            });
-
-            document.getElementById('m-total').innerText = `₹${total.toLocaleString()}`;
-            updateChart(sortedHeads, sortedHeads.map(h => {
-                let hSum = 0;
-                Object.values(monthMatrix).forEach(m => hSum += (m[h] || 0));
-                return hSum;
-            }));
-        });
-    }
-
-    window.addCat = () => {
-        const n = document.getElementById('new-cat').value;
-        if(n) addDoc(collection(db,"categories"), { name: n, uid: auth.currentUser.uid });
-        document.getElementById('new-cat').value = '';
+    document.getElementById('toggle-auth').onclick = () => {
+        isLoginMode = !isLoginMode;
+        document.getElementById('auth-title').innerText = isLoginMode ? "Welcome Back" : "Join Platform";
+        document.getElementById('auth-btn').innerText = isLoginMode ? "Sign In" : "Register";
+        document.getElementById('toggle-auth').innerText = isLoginMode ? "Create Account" : "Back to Login";
     };
-
-    window.saveEntry = () => {
-        const d = document.getElementById('exp-date').value;
-        const c = document.getElementById('exp-cat').value;
-        const a = parseFloat(document.getElementById('exp-amt').value);
-        if(d && c && a) addDoc(collection(db,"expenses"), { date: d, cat: c, amt: a, uid: auth.currentUser.uid });
-    };
-
-    window.delDoc = (c,id) => confirm("Delete?") && deleteDoc(doc(db,c,id));
-
-    function loadAdmin() {
-        document.getElementById('admin-panel').style.display = 'block';
-        onSnapshot(query(collection(db,"users"), where("approved","==",false)), snap => {
-            const list = document.getElementById('pending-list');
-            list.innerHTML = '';
-            snap.forEach(u => {
-                list.innerHTML += `<div style="display:flex; justify-content:space-between; margin:10px 0">${u.data().email} <button onclick="window.approve('${u.id}')" style="width:auto; padding:5px 10px; background:var(--accent); border:none; border-radius:5px; color:white">Approve</button></div>`;
-            });
-        });
-    }
-    window.approve = (id) => updateDoc(doc(db, "users", id), { approved: true });
-
-    function updateChart(l, v) {
-        const ctx = document.getElementById('monthlyChart').getContext('2d');
-        if(myChart) myChart.destroy();
-        myChart = new Chart(ctx, { type: 'pie', data: { labels: l, datasets: [{ data: v, backgroundColor: ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899'], borderWidth: 0 }] }, options: { plugins: { legend: { labels: { color: 'white' } } } } });
-    }
 
     lucide.createIcons();
 </script>
