@@ -1,300 +1,522 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FinanceCloud Pro | INR</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <style>
-        :root { --primary: #3b82f6; --accent: #10b981; --bg: #0f172a; --glass: rgba(30, 41, 59, 0.7); --text: #f8fafc; }
-        
-        body {
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.9)), 
-                        url('https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?q=80&w=2000');
-            background-size: cover; background-attachment: fixed; color: var(--text); margin: 0; padding: 0;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-        /* Navigation Tabs */
-        nav { display: flex; justify-content: center; gap: 20px; padding: 20px; background: rgba(0,0,0,0.3); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 100; }
-        nav div { cursor: pointer; padding: 10px 20px; border-radius: 30px; transition: 0.3s; font-weight: 600; font-size: 0.9rem; }
-        nav div:hover { background: rgba(255,255,255,0.1); }
-        nav div.active { background: var(--primary); color: white; }
+<title>Expense Tracker</title>
 
-        .container { max-width: 1200px; margin: 20px auto; padding: 0 20px; display: none; }
-        .card { background: var(--glass); backdrop-filter: blur(12px); border-radius: 16px; padding: 20px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.1); }
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-        /* Auth Screen */
-        .auth-overlay { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 2000; }
-        .auth-card { background: var(--glass); padding: 35px; border-radius: 24px; width: 90%; max-width: 380px; text-align: center; }
-        .pass-wrapper { position: relative; width: 100%; }
-        .eye-icon { position: absolute; right: 12px; top: 12px; cursor: pointer; color: #94a3b8; }
+<style>
 
-        /* Inputs & Tables */
-        input, select, button { width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.3); color: white; box-sizing: border-box; }
-        .btn-main { background: var(--primary); border: none; font-weight: 700; cursor: pointer; }
-        
-        table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; color: #94a3b8; font-size: 0.75rem; padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); }
-        td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+:root{
+--primary:#3b82f6;
+--accent:#10b981;
+--bg:#0f172a;
+--glass:rgba(30,41,59,.7);
+--text:#f8fafc;
+}
 
-        .grid { display: grid; grid-template-columns: 1fr 2.5fr; gap: 20px; }
-        @media (max-width: 850px) { .grid { grid-template-columns: 1fr; } }
-        
-        .hidden { display: none !important; }
-        .total-badge { color: var(--accent); font-weight: bold; }
-    </style>
+body{
+font-family:Arial;
+background:#0f172a;
+color:white;
+margin:0;
+}
+
+nav{
+display:flex;
+gap:20px;
+padding:15px;
+background:#020617;
+}
+
+nav div{
+cursor:pointer;
+}
+
+.container{
+max-width:1100px;
+margin:auto;
+padding:20px;
+}
+
+.card{
+background:rgba(30,41,59,.7);
+padding:20px;
+border-radius:12px;
+margin-bottom:20px;
+}
+
+input,select,button{
+padding:10px;
+border-radius:6px;
+border:none;
+margin-bottom:10px;
+}
+
+button{
+background:#3b82f6;
+color:white;
+cursor:pointer;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+}
+
+td,th{
+padding:10px;
+border-bottom:1px solid #334155;
+}
+
+.grid{
+display:grid;
+grid-template-columns:1fr 2fr;
+gap:20px;
+}
+
+.hidden{
+display:none;
+}
+
+</style>
 </head>
+
 <body>
 
-    <div id="auth-screen" class="auth-overlay">
-        <div class="auth-card">
-            <h2 id="auth-title">Sign In</h2>
-            <input type="email" id="auth-email" placeholder="Email Address">
-            <div class="pass-wrapper">
-                <input type="password" id="auth-pass" placeholder="Password">
-                <i data-lucide="eye" class="eye-icon" id="toggle-pass"></i>
-            </div>
-            <button class="btn-main" id="auth-btn">Sign In</button>
-            <span id="forgot-btn" style="cursor:pointer; font-size:0.8rem; color:var(--primary)">Forgot Password?</span>
-            <p id="toggle-auth" style="cursor:pointer; font-size:0.9rem; margin-top:15px">New? Request Access</p>
-            <div id="auth-status" style="color: #fbbf24; margin-top:10px"></div>
-        </div>
-    </div>
+<nav>
 
-    <div id="main-app" style="display:none">
-        <nav>
-            <div class="nav-link active" onclick="switchTab('dashboard')">Dashboard</div>
-            <div class="nav-link" onclick="switchTab('analytics')">Monthly Breakdown</div>
-            <div onclick="window.logout()" style="color:#ef4444">Logout</div>
-        </nav>
+<div onclick="switchTab('dashboard')">Dashboard</div>
+<div onclick="switchTab('analytics')">Analytics</div>
 
-        <div id="dashboard-tab" class="container" style="display:block">
-            <div id="admin-panel" class="card" style="display:none; border:2px solid var(--accent)">
-                <h3 style="color:var(--accent)">Admin: Pending Users</h3>
-                <div id="pending-list"></div>
-            </div>
+</nav>
 
-            <div class="card" style="text-align: center;">
-                <span style="color:#94a3b8">Current Month Spend</span>
-                <div id="m-total" style="font-size: 2.5rem; font-weight: 800; color: var(--primary);">₹0.00</div>
-            </div>
 
-            <div class="grid">
-                <div class="sidebar">
-                    <div class="card">
-                        <h3>Add Head</h3>
-                        <input type="text" id="new-cat" placeholder="e.g. Rent">
-                        <button class="btn-main" onclick="window.addCat()" style="background:var(--accent)">Add</button>
-                        <div id="cat-list"></div>
-                    </div>
-                </div>
-                <div class="main">
-                    <div class="card">
-                        <h3>Log Entry</h3>
-                        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr auto; gap:10px">
-                            <input type="date" id="exp-date">
-                            <select id="exp-cat"><option>Loading...</option></select>
-                            <input type="number" id="exp-amt" placeholder="Amount">
-                            <button class="btn-main" onclick="window.saveEntry()">Save</button>
-                        </div>
-                    </div>
-                    <div class="card">
-                        <h3>History</h3>
-                        <table>
-                            <thead><tr><th>Date</th><th>Head</th><th>Amount</th><th>Action</th></tr></thead>
-                            <tbody id="hist-body"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
+<div id="dashboard-tab" class="container">
 
-        <div id="analytics-tab" class="container">
-            <div class="card">
-                <h2>Category Breakdown by Month</h2>
-                <div style="overflow-x: auto;">
-                    <table id="breakdown-table">
-                        <thead>
-                            <tr id="breakdown-head"><th>Month</th></tr>
-                        </thead>
-                        <tbody id="breakdown-body"></tbody>
-                    </table>
-                </div>
-            </div>
-            <div class="card">
-                <h2>Visual Distribution</h2>
-                <canvas id="monthlyChart"></canvas>
-            </div>
-        </div>
-    </div>
+<div class="card" style="display:flex;justify-content:space-between">
+
+<div>
+
+<span>Monthly Spend</span>
+
+<h1 id="m-total">₹0</h1>
+
+</div>
+
+<div>
+
+<label>Select Month</label><br>
+
+<input type="month" id="month-filter">
+
+</div>
+
+</div>
+
+
+<div class="card">
+
+<h3>Monthly Category Summary</h3>
+
+<div id="monthly-summary"></div>
+
+</div>
+
+
+<div class="grid">
+
+<div>
+
+<div class="card">
+
+<h3>Add Category</h3>
+
+<input id="new-cat" placeholder="Category">
+
+<button onclick="addCat()">Add</button>
+
+<div id="cat-list"></div>
+
+</div>
+
+</div>
+
+
+<div>
+
+<div class="card">
+
+<h3>Add Expense</h3>
+
+<input type="date" id="exp-date">
+
+<select id="exp-cat"></select>
+
+<input type="number" id="exp-amt" placeholder="Amount">
+
+<button onclick="saveEntry()">Save</button>
+
+</div>
+
+
+<div class="card">
+
+<h3>Expense History</h3>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Date</th>
+<th>Category</th>
+<th>Amount</th>
+<th></th>
+
+</tr>
+
+</thead>
+
+<tbody id="hist-body"></tbody>
+
+</table>
+
+</div>
+
+
+<div class="card hidden" id="category-detail">
+
+<h3 id="cat-title"></h3>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Date</th>
+<th>Amount</th>
+
+</tr>
+
+</thead>
+
+<tbody id="cat-body"></tbody>
+
+</table>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+
+<div id="analytics-tab" class="container hidden">
+
+<div class="card">
+
+<h2>Expense Distribution</h2>
+
+<canvas id="monthlyChart"></canvas>
+
+</div>
+
+</div>
+
+
 
 <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAuth, setPersistence, browserLocalPersistence, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, addDoc, onSnapshot, query, where, orderBy, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    const firebaseConfig = {
-        apiKey: "AIzaSyAIATSlAXKTIqJPZqwkkZeX3AJjfR2irfs",
-        authDomain: "expensetracker-fbc8c.firebaseapp.com",
-        projectId: "expensetracker-fbc8c",
-        storageBucket: "expensetracker-fbc8c.firebasestorage.app",
-        messagingSenderId: "17366275779",
-        appId: "1:17366275779:web:f0a98234a1a87a074db476"
-    };
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getAuth,onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getFirestore,collection,addDoc,onSnapshot,query,where,deleteDoc,doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    const ADMIN = "fadilrafeek29@gmail.com";
-    let isLogin = true;
-    let myChart;
 
-    // --- Tab Switching ---
-    window.switchTab = (tab) => {
-        document.querySelectorAll('.container').forEach(c => c.style.display = 'none');
-        document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
-        document.getElementById(tab + '-tab').style.display = 'block';
-        event.currentTarget.classList.add('active');
-    };
+const firebaseConfig = {
 
-    // --- Password Toggle ---
-    document.getElementById('toggle-pass').onclick = () => {
-        const p = document.getElementById('auth-pass');
-        p.type = p.type === 'password' ? 'text' : 'password';
-    };
+apiKey:"AIzaSyAIATSlAXKTIqJPZqwkkZeX3AJjfR2irfs",
+authDomain:"expensetracker-fbc8c.firebaseapp.com",
+projectId:"expensetracker-fbc8c",
+storageBucket:"expensetracker-fbc8c.firebasestorage.app",
+messagingSenderId:"17366275779",
+appId:"1:17366275779:web:f0a98234a1a87a074db476"
 
-    // --- Auth Logic (Persistent) ---
-    setPersistence(auth, browserLocalPersistence);
+};
 
-    document.getElementById('auth-btn').onclick = async () => {
-        const e = document.getElementById('auth-email').value;
-        const p = document.getElementById('auth-pass').value;
-        try {
-            if(isLogin) await signInWithEmailAndPassword(auth, e, p);
-            else {
-                const res = await createUserWithEmailAndPassword(auth, e, p);
-                await setDoc(doc(db, "users", res.user.uid), { email: e, approved: false, uid: res.user.uid });
-                alert("Request Sent to Fadil!");
-            }
-        } catch (err) { alert(err.message); }
-    };
 
-    onAuthStateChanged(auth, async (user) => {
-        if(user) {
-            const uDoc = await getDoc(doc(db, "users", user.uid));
-            if(uDoc.exists() && (uDoc.data().approved || user.email === ADMIN)) {
-                document.getElementById('auth-screen').classList.add('hidden');
-                document.getElementById('main-app').style.display = 'block';
-                if(user.email === ADMIN) loadAdmin();
-                initApp(user.uid);
-            } else {
-                document.getElementById('auth-status').innerText = "Wait for Fadil to approve.";
-            }
-        } else {
-            document.getElementById('auth-screen').classList.remove('hidden');
-            document.getElementById('main-app').style.display = 'none';
-        }
-    });
+const app=initializeApp(firebaseConfig);
 
-    window.logout = () => signOut(auth);
+const db=getFirestore(app);
 
-    // --- App Data ---
-    function initApp(uid) {
-        // Categories
-        onSnapshot(query(collection(db,"categories"), where("uid","==",uid)), snap => {
-            const list = document.getElementById('cat-list');
-            const select = document.getElementById('exp-cat');
-            list.innerHTML = ''; select.innerHTML = '<option value="">Select Head</option>';
-            snap.forEach(d => {
-                list.innerHTML += `<div style="display:flex; justify-content:space-between; padding:5px; border-bottom:1px solid #333">${d.data().name} <span onclick="window.delDoc('categories','${d.id}')" style="color:red; cursor:pointer">×</span></div>`;
-                select.innerHTML += `<option value="${d.data().name}">${d.data().name}</option>`;
-            });
-        });
+const auth=getAuth(app);
 
-        // Expenses & Analytics
-        onSnapshot(query(collection(db,"expenses"), where("uid","==",uid), orderBy("date","desc")), snap => {
-            const body = document.getElementById('hist-body');
-            const bBody = document.getElementById('breakdown-body');
-            const bHead = document.getElementById('breakdown-head');
-            body.innerHTML = ''; bBody.innerHTML = '';
-            
-            let total = 0;
-            let monthMatrix = {}; // { "2023-10": { "Food": 100 } }
-            let allHeads = new Set();
+let chart;
+let entries=[];
 
-            snap.forEach(d => {
-                const item = d.data();
-                total += item.amt;
-                const mKey = item.date.substring(0, 7); // YYYY-MM
-                allHeads.add(item.cat);
-                
-                if(!monthMatrix[mKey]) monthMatrix[mKey] = {};
-                monthMatrix[mKey][item.cat] = (monthMatrix[mKey][item.cat] || 0) + item.amt;
 
-                body.innerHTML += `<tr><td>${item.date}</td><td>${item.cat}</td><td>₹${item.amt.toLocaleString()}</td><td><button onclick="window.delDoc('expenses','${d.id}')" style="color:red; border:none; background:none; cursor:pointer">Del</button></td></tr>`;
-            });
 
-            // Update Breakdown Table
-            const sortedHeads = Array.from(allHeads);
-            bHead.innerHTML = `<th>Month</th>` + sortedHeads.map(h => `<th>${h}</th>`).join('') + `<th>Total</th>`;
-            
-            Object.keys(monthMatrix).sort().reverse().forEach(month => {
-                let mTotal = 0;
-                let row = `<td>${month}</td>`;
-                sortedHeads.forEach(h => {
-                    const val = monthMatrix[month][h] || 0;
-                    mTotal += val;
-                    row += `<td>₹${val}</td>`;
-                });
-                row += `<td class="total-badge">₹${mTotal}</td>`;
-                bBody.innerHTML += `<tr>${row}</tr>`;
-            });
+window.switchTab=function(tab){
 
-            document.getElementById('m-total').innerText = `₹${total.toLocaleString()}`;
-            updateChart(sortedHeads, sortedHeads.map(h => {
-                let hSum = 0;
-                Object.values(monthMatrix).forEach(m => hSum += (m[h] || 0));
-                return hSum;
-            }));
-        });
-    }
+document.getElementById("dashboard-tab").classList.add("hidden");
+document.getElementById("analytics-tab").classList.add("hidden");
 
-    window.addCat = () => {
-        const n = document.getElementById('new-cat').value;
-        if(n) addDoc(collection(db,"categories"), { name: n, uid: auth.currentUser.uid });
-        document.getElementById('new-cat').value = '';
-    };
+document.getElementById(tab+"-tab").classList.remove("hidden");
 
-    window.saveEntry = () => {
-        const d = document.getElementById('exp-date').value;
-        const c = document.getElementById('exp-cat').value;
-        const a = parseFloat(document.getElementById('exp-amt').value);
-        if(d && c && a) addDoc(collection(db,"expenses"), { date: d, cat: c, amt: a, uid: auth.currentUser.uid });
-    };
+}
 
-    window.delDoc = (c,id) => confirm("Delete?") && deleteDoc(doc(db,c,id));
 
-    function loadAdmin() {
-        document.getElementById('admin-panel').style.display = 'block';
-        onSnapshot(query(collection(db,"users"), where("approved","==",false)), snap => {
-            const list = document.getElementById('pending-list');
-            list.innerHTML = '';
-            snap.forEach(u => {
-                list.innerHTML += `<div style="display:flex; justify-content:space-between; margin:10px 0">${u.data().email} <button onclick="window.approve('${u.id}')" style="width:auto; padding:5px 10px; background:var(--accent); border:none; border-radius:5px; color:white">Approve</button></div>`;
-            });
-        });
-    }
-    window.approve = (id) => updateDoc(doc(db, "users", id), { approved: true });
 
-    function updateChart(l, v) {
-        const ctx = document.getElementById('monthlyChart').getContext('2d');
-        if(myChart) myChart.destroy();
-        myChart = new Chart(ctx, { type: 'pie', data: { labels: l, datasets: [{ data: v, backgroundColor: ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899'], borderWidth: 0 }] }, options: { plugins: { legend: { labels: { color: 'white' } } } } });
-    }
+window.addCat=function(){
 
-    lucide.createIcons();
+const name=document.getElementById("new-cat").value;
+
+if(!name)return;
+
+addDoc(collection(db,"categories"),{
+
+name:name,
+uid:auth.currentUser.uid
+
+});
+
+document.getElementById("new-cat").value="";
+
+}
+
+
+
+window.saveEntry=function(){
+
+const d=document.getElementById("exp-date").value;
+
+const c=document.getElementById("exp-cat").value;
+
+const a=parseFloat(document.getElementById("exp-amt").value);
+
+if(!d||!c||!a)return;
+
+addDoc(collection(db,"expenses"),{
+
+date:d,
+cat:c,
+amt:a,
+uid:auth.currentUser.uid
+
+});
+
+}
+
+
+
+window.delDoc=function(id){
+
+deleteDoc(doc(db,"expenses",id));
+
+}
+
+
+
+onAuthStateChanged(auth,user=>{
+
+if(!user)return;
+
+loadData(user.uid);
+
+});
+
+
+
+function loadData(uid){
+
+onSnapshot(query(collection(db,"categories"),where("uid","==",uid)),snap=>{
+
+const list=document.getElementById("cat-list");
+
+const select=document.getElementById("exp-cat");
+
+list.innerHTML="";
+
+select.innerHTML="";
+
+snap.forEach(d=>{
+
+list.innerHTML+=`<div>${d.data().name}</div>`;
+
+select.innerHTML+=`<option>${d.data().name}</option>`;
+
+});
+
+});
+
+
+
+onSnapshot(query(collection(db,"expenses"),where("uid","==",uid)),snap=>{
+
+const body=document.getElementById("hist-body");
+
+body.innerHTML="";
+
+entries=[];
+
+let month=document.getElementById("month-filter").value;
+
+let total=0;
+
+let catTotals={};
+
+snap.forEach(d=>{
+
+const item=d.data();
+
+if(month && !item.date.startsWith(month))return;
+
+entries.push(item);
+
+total+=item.amt;
+
+if(!catTotals[item.cat])catTotals[item.cat]=0;
+
+catTotals[item.cat]+=item.amt;
+
+body.innerHTML+=`
+
+<tr>
+
+<td>${item.date}</td>
+
+<td>${item.cat}</td>
+
+<td>₹${item.amt}</td>
+
+<td><button onclick="delDoc('${d.id}')">X</button></td>
+
+</tr>
+
+`;
+
+});
+
+document.getElementById("m-total").innerText="₹"+total;
+
+
+
+buildSummary(catTotals,total);
+
+updateChart(catTotals);
+
+});
+
+}
+
+
+
+function buildSummary(catTotals,total){
+
+const div=document.getElementById("monthly-summary");
+
+div.innerHTML="";
+
+Object.keys(catTotals).forEach(cat=>{
+
+let val=catTotals[cat];
+
+let pct=((val/total)*100).toFixed(1);
+
+div.innerHTML+=`
+
+<div style="display:flex;justify-content:space-between;padding:10px;border-bottom:1px solid #334155;cursor:pointer"
+
+onclick="showCategory('${cat}')">
+
+<span>${cat}</span>
+
+<span>₹${val} (${pct}%)</span>
+
+</div>
+
+`;
+
+});
+
+}
+
+
+
+window.showCategory=function(cat){
+
+const body=document.getElementById("cat-body");
+
+body.innerHTML="";
+
+entries.filter(e=>e.cat==cat)
+
+.sort((a,b)=>new Date(a.date)-new Date(b.date))
+
+.forEach(e=>{
+
+body.innerHTML+=`
+
+<tr>
+
+<td>${e.date}</td>
+
+<td>₹${e.amt}</td>
+
+</tr>
+
+`;
+
+});
+
+document.getElementById("cat-title").innerText=cat+" Expenses";
+
+document.getElementById("category-detail").classList.remove("hidden");
+
+}
+
+
+
+function updateChart(catTotals){
+
+const ctx=document.getElementById("monthlyChart");
+
+if(chart)chart.destroy();
+
+chart=new Chart(ctx,{
+
+type:"pie",
+
+data:{
+
+labels:Object.keys(catTotals),
+
+datasets:[{
+
+data:Object.values(catTotals),
+
+backgroundColor:["#3b82f6","#10b981","#f59e0b","#ef4444","#8b5cf6"]
+
+}]
+
+}
+
+});
+
+}
+
+
+
+document.getElementById("month-filter").onchange=()=>location.reload();
+
 </script>
+
 </body>
 </html>
