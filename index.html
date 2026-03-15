@@ -1,12 +1,14 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Expense Tracker</title>
+<title>FinanceCloud Pro</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
 
 <style>
 
@@ -19,57 +21,50 @@
 }
 
 body{
-font-family:Arial;
-background:#0f172a;
-color:white;
+font-family:Inter,system-ui;
+background:linear-gradient(rgba(15,23,42,.92),rgba(15,23,42,.92)),
+url("https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?q=80&w=2000");
+background-size:cover;
+background-attachment:fixed;
 margin:0;
+color:var(--text);
 }
 
 nav{
 display:flex;
+justify-content:center;
 gap:20px;
 padding:15px;
-background:#020617;
+background:rgba(0,0,0,.3);
+backdrop-filter:blur(10px);
+flex-wrap:wrap;
 }
 
-nav div{
+.nav-link{
 cursor:pointer;
+padding:8px 16px;
+border-radius:20px;
+font-weight:600;
+}
+
+.nav-link.active{
+background:var(--primary);
 }
 
 .container{
-max-width:1100px;
+max-width:1200px;
 margin:auto;
 padding:20px;
+display:none;
 }
 
 .card{
-background:rgba(30,41,59,.7);
+background:var(--glass);
+backdrop-filter:blur(12px);
+border-radius:16px;
 padding:20px;
-border-radius:12px;
 margin-bottom:20px;
-}
-
-input,select,button{
-padding:10px;
-border-radius:6px;
-border:none;
-margin-bottom:10px;
-}
-
-button{
-background:#3b82f6;
-color:white;
-cursor:pointer;
-}
-
-table{
-width:100%;
-border-collapse:collapse;
-}
-
-td,th{
-padding:10px;
-border-bottom:1px solid #334155;
+border:1px solid rgba(255,255,255,.08);
 }
 
 .grid{
@@ -78,41 +73,130 @@ grid-template-columns:1fr 2fr;
 gap:20px;
 }
 
+@media(max-width:900px){
+.grid{grid-template-columns:1fr;}
+}
+
+input,select,button{
+width:100%;
+padding:12px;
+border-radius:8px;
+border:1px solid rgba(255,255,255,.15);
+background:rgba(0,0,0,.35);
+color:white;
+box-sizing:border-box;
+margin-bottom:10px;
+}
+
+.btn-main{
+background:var(--primary);
+border:none;
+font-weight:700;
+cursor:pointer;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+}
+
+th{
+text-align:left;
+padding:10px;
+font-size:.8rem;
+color:#94a3b8;
+}
+
+td{
+padding:10px;
+border-bottom:1px solid rgba(255,255,255,.06);
+}
+
+.summary-row{
+display:flex;
+justify-content:space-between;
+padding:10px;
+border-bottom:1px solid rgba(255,255,255,.06);
+cursor:pointer;
+}
+
+.summary-row:hover{
+background:rgba(255,255,255,.05);
+}
+
 .hidden{
 display:none;
 }
 
-</style>
-</head>
+/* login screen */
 
+.auth-overlay{
+position:fixed;
+inset:0;
+display:flex;
+align-items:center;
+justify-content:center;
+background:#020617;
+z-index:1000;
+}
+
+.auth-card{
+background:var(--glass);
+padding:35px;
+border-radius:20px;
+width:90%;
+max-width:380px;
+}
+
+</style>
+
+</head>
 <body>
+
+<div id="auth-screen" class="auth-overlay">
+
+<div class="auth-card">
+
+<h2 id="auth-title">Sign In</h2>
+
+<input id="auth-email" placeholder="Email">
+
+<input type="password" id="auth-pass" placeholder="Password">
+
+<button class="btn-main" id="auth-btn">Sign In</button>
+
+<p id="toggle-auth" style="cursor:pointer">New? Request Access</p>
+
+<div id="auth-status"></div>
+
+</div>
+
+</div>
+
+
+<div id="main-app" style="display:none">
 
 <nav>
 
-<div onclick="switchTab('dashboard')">Dashboard</div>
-<div onclick="switchTab('analytics')">Analytics</div>
+<div class="nav-link active" onclick="switchTab('dashboard')">Dashboard</div>
+<div class="nav-link" onclick="switchTab('analytics')">Analytics</div>
+<div onclick="logout()" style="color:#ef4444;cursor:pointer">Logout</div>
 
 </nav>
 
 
-<div id="dashboard-tab" class="container">
+<div id="dashboard-tab" class="container" style="display:block">
 
-<div class="card" style="display:flex;justify-content:space-between">
+<div class="card" style="display:flex;justify-content:space-between;flex-wrap:wrap">
 
 <div>
-
-<span>Monthly Spend</span>
-
-<h1 id="m-total">₹0</h1>
-
+<span style="color:#94a3b8">Monthly Spend</span>
+<div id="m-total" style="font-size:2.5rem;font-weight:800;color:var(--primary)">₹0</div>
 </div>
 
 <div>
-
-<label>Select Month</label><br>
-
+<label style="font-size:.8rem">Select Month</label>
 <input type="month" id="month-filter">
-
 </div>
 
 </div>
@@ -137,7 +221,7 @@ display:none;
 
 <input id="new-cat" placeholder="Category">
 
-<button onclick="addCat()">Add</button>
+<button class="btn-main" onclick="addCat()">Add</button>
 
 <div id="cat-list"></div>
 
@@ -158,7 +242,7 @@ display:none;
 
 <input type="number" id="exp-amt" placeholder="Amount">
 
-<button onclick="saveEntry()">Save</button>
+<button class="btn-main" onclick="saveEntry()">Save</button>
 
 </div>
 
@@ -170,16 +254,12 @@ display:none;
 <table>
 
 <thead>
-
 <tr>
-
 <th>Date</th>
 <th>Category</th>
 <th>Amount</th>
 <th></th>
-
 </tr>
-
 </thead>
 
 <tbody id="hist-body"></tbody>
@@ -196,14 +276,10 @@ display:none;
 <table>
 
 <thead>
-
 <tr>
-
 <th>Date</th>
 <th>Amount</th>
-
 </tr>
-
 </thead>
 
 <tbody id="cat-body"></tbody>
@@ -219,7 +295,7 @@ display:none;
 </div>
 
 
-<div id="analytics-tab" class="container hidden">
+<div id="analytics-tab" class="container">
 
 <div class="card">
 
@@ -231,125 +307,111 @@ display:none;
 
 </div>
 
+</div>
 
 
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getAuth,onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { getFirestore,collection,addDoc,onSnapshot,query,where,deleteDoc,doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getFirestore, collection, addDoc, onSnapshot, query, where, deleteDoc, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 
-const firebaseConfig = {
-
+const firebaseConfig={
 apiKey:"AIzaSyAIATSlAXKTIqJPZqwkkZeX3AJjfR2irfs",
 authDomain:"expensetracker-fbc8c.firebaseapp.com",
 projectId:"expensetracker-fbc8c",
-storageBucket:"expensetracker-fbc8c.firebasestorage.app",
+storageBucket:"expensetracker-fbc8c.appspot.com",
 messagingSenderId:"17366275779",
 appId:"1:17366275779:web:f0a98234a1a87a074db476"
-
 };
 
+const ADMIN="fadilrafeek29@gmail.com";
 
 const app=initializeApp(firebaseConfig);
-
 const db=getFirestore(app);
-
 const auth=getAuth(app);
 
+let isLogin=true;
 let chart;
 let entries=[];
 
 
-
 window.switchTab=function(tab){
 
-document.getElementById("dashboard-tab").classList.add("hidden");
-document.getElementById("analytics-tab").classList.add("hidden");
-
-document.getElementById(tab+"-tab").classList.remove("hidden");
+document.querySelectorAll(".container").forEach(c=>c.style.display="none");
+document.getElementById(tab+"-tab").style.display="block";
 
 }
 
 
-
-window.addCat=function(){
-
-const name=document.getElementById("new-cat").value;
-
-if(!name)return;
-
-addDoc(collection(db,"categories"),{
-
-name:name,
-uid:auth.currentUser.uid
-
-});
-
-document.getElementById("new-cat").value="";
-
-}
+document.getElementById("toggle-auth").onclick=()=>{
+isLogin=!isLogin;
+document.getElementById("auth-title").innerText=isLogin?"Sign In":"Request Access";
+document.getElementById("auth-btn").innerText=isLogin?"Sign In":"Request";
+};
 
 
+document.getElementById("auth-btn").onclick=async()=>{
 
-window.saveEntry=function(){
+let email=document.getElementById("auth-email").value;
+let pass=document.getElementById("auth-pass").value;
 
-const d=document.getElementById("exp-date").value;
+if(isLogin){
 
-const c=document.getElementById("exp-cat").value;
+await signInWithEmailAndPassword(auth,email,pass);
 
-const a=parseFloat(document.getElementById("exp-amt").value);
+}else{
 
-if(!d||!c||!a)return;
+let res=await createUserWithEmailAndPassword(auth,email,pass);
 
-addDoc(collection(db,"expenses"),{
+await setDoc(doc(db,"users",res.user.uid),{email:email,approved:false});
 
-date:d,
-cat:c,
-amt:a,
-uid:auth.currentUser.uid
-
-});
+alert("Access request sent");
 
 }
 
+};
 
 
-window.delDoc=function(id){
-
-deleteDoc(doc(db,"expenses",id));
-
-}
-
-
-
-onAuthStateChanged(auth,user=>{
+onAuthStateChanged(auth,async user=>{
 
 if(!user)return;
 
+let u=await getDoc(doc(db,"users",user.uid));
+
+if(user.email===ADMIN || (u.exists() && u.data().approved)){
+
+document.getElementById("auth-screen").style.display="none";
+document.getElementById("main-app").style.display="block";
+
 loadData(user.uid);
+
+}else{
+
+document.getElementById("auth-status").innerText="Waiting for admin approval";
+
+}
 
 });
 
+
+window.logout=()=>signOut(auth);
 
 
 function loadData(uid){
 
 onSnapshot(query(collection(db,"categories"),where("uid","==",uid)),snap=>{
 
-const list=document.getElementById("cat-list");
-
-const select=document.getElementById("exp-cat");
+let list=document.getElementById("cat-list");
+let select=document.getElementById("exp-cat");
 
 list.innerHTML="";
-
 select.innerHTML="";
 
 snap.forEach(d=>{
 
 list.innerHTML+=`<div>${d.data().name}</div>`;
-
 select.innerHTML+=`<option>${d.data().name}</option>`;
 
 });
@@ -357,24 +419,19 @@ select.innerHTML+=`<option>${d.data().name}</option>`;
 });
 
 
-
 onSnapshot(query(collection(db,"expenses"),where("uid","==",uid)),snap=>{
-
-const body=document.getElementById("hist-body");
-
-body.innerHTML="";
-
-entries=[];
 
 let month=document.getElementById("month-filter").value;
 
 let total=0;
-
 let catTotals={};
+
+entries=[];
+document.getElementById("hist-body").innerHTML="";
 
 snap.forEach(d=>{
 
-const item=d.data();
+let item=d.data();
 
 if(month && !item.date.startsWith(month))return;
 
@@ -383,33 +440,24 @@ entries.push(item);
 total+=item.amt;
 
 if(!catTotals[item.cat])catTotals[item.cat]=0;
-
 catTotals[item.cat]+=item.amt;
 
-body.innerHTML+=`
+document.getElementById("hist-body").innerHTML+=`
 
 <tr>
 
 <td>${item.date}</td>
-
 <td>${item.cat}</td>
-
 <td>₹${item.amt}</td>
-
 <td><button onclick="delDoc('${d.id}')">X</button></td>
 
-</tr>
-
-`;
+</tr>`;
 
 });
 
 document.getElementById("m-total").innerText="₹"+total;
 
-
-
 buildSummary(catTotals,total);
-
 updateChart(catTotals);
 
 });
@@ -417,10 +465,36 @@ updateChart(catTotals);
 }
 
 
+window.addCat=function(){
+
+let name=document.getElementById("new-cat").value;
+
+if(!name)return;
+
+addDoc(collection(db,"categories"),{name:name,uid:auth.currentUser.uid});
+
+};
+
+
+window.saveEntry=function(){
+
+let d=document.getElementById("exp-date").value;
+let c=document.getElementById("exp-cat").value;
+let a=parseFloat(document.getElementById("exp-amt").value);
+
+if(!d||!c||!a)return;
+
+addDoc(collection(db,"expenses"),{date:d,cat:c,amt:a,uid:auth.currentUser.uid});
+
+};
+
+
+window.delDoc=id=>deleteDoc(doc(db,"expenses",id));
+
 
 function buildSummary(catTotals,total){
 
-const div=document.getElementById("monthly-summary");
+let div=document.getElementById("monthly-summary");
 
 div.innerHTML="";
 
@@ -432,34 +506,30 @@ let pct=((val/total)*100).toFixed(1);
 
 div.innerHTML+=`
 
-<div style="display:flex;justify-content:space-between;padding:10px;border-bottom:1px solid #334155;cursor:pointer"
-
-onclick="showCategory('${cat}')">
+<div class="summary-row" onclick="showCategory('${cat}')">
 
 <span>${cat}</span>
 
 <span>₹${val} (${pct}%)</span>
 
-</div>
-
-`;
+</div>`;
 
 });
 
 }
 
 
-
 window.showCategory=function(cat){
 
-const body=document.getElementById("cat-body");
+let body=document.getElementById("cat-body");
 
 body.innerHTML="";
 
-entries.filter(e=>e.cat==cat)
+document.getElementById("cat-title").innerText=cat+" Expenses";
 
+entries
+.filter(e=>e.cat===cat)
 .sort((a,b)=>new Date(a.date)-new Date(b.date))
-
 .forEach(e=>{
 
 body.innerHTML+=`
@@ -467,21 +537,15 @@ body.innerHTML+=`
 <tr>
 
 <td>${e.date}</td>
-
 <td>₹${e.amt}</td>
 
-</tr>
-
-`;
+</tr>`;
 
 });
 
-document.getElementById("cat-title").innerText=cat+" Expenses";
-
 document.getElementById("category-detail").classList.remove("hidden");
 
-}
-
+};
 
 
 function updateChart(catTotals){
@@ -491,27 +555,17 @@ const ctx=document.getElementById("monthlyChart");
 if(chart)chart.destroy();
 
 chart=new Chart(ctx,{
-
 type:"pie",
-
 data:{
-
 labels:Object.keys(catTotals),
-
 datasets:[{
-
 data:Object.values(catTotals),
-
 backgroundColor:["#3b82f6","#10b981","#f59e0b","#ef4444","#8b5cf6"]
-
 }]
-
 }
-
 });
 
 }
-
 
 
 document.getElementById("month-filter").onchange=()=>location.reload();
@@ -520,3 +574,4 @@ document.getElementById("month-filter").onchange=()=>location.reload();
 
 </body>
 </html>
+```
